@@ -1,0 +1,26 @@
+Package: SCRAT
+Type: Package
+Title: SCRAT: Single-Cell Regulome Analysis Tool
+Version: 0.99.0
+Date: 2016-1-18
+Author: Zhicheng Ji, Weiqiang Zhou, Hongkai Ji
+Maintainer: Zhicheng Ji <zji4@jhu.edu>
+Description: SCRAT provides essential tools for users to read in single-cell
+    regolome data (ChIP-seq, ATAC-seq, DNase-seq) and summarize into different types
+    of features. It also allows users to visualize the features, cluster samples and
+    identify key features.
+License: GPL(>=2)
+Imports:
+    shiny,
+    GenomicAlignments,
+    ggplot2,
+    reshape2,
+    pheatmap,
+    scatterD3,
+    SCRATdata
+VignetteBuilder: knitr
+Suggests:
+    knitr
+Depends:
+    R(>= 2.10.0)
+RoxygenNote: 5.0.1
