@@ -25,6 +25,10 @@ library(SCRAT)
 SCRATui()
 ```
 
+### SCRAT Online User Interface
+
+SCRAT is also available online at https://zhiji.shinyapps.io/scrat/
+
 ## Contact the Author
 Author: Zhicheng Ji, Weiqiang Zhou, Hongkai Ji
 
