@@ -17,7 +17,7 @@ library(SCRATdatahg38)
 library(SCRATdatamm9)
 library(SCRATdatamm10)
 
-options(shiny.maxRequestSize=10*1024^3)
+options(shiny.maxRequestSize=10*1024^10)
 
 shinyServer(function(input, output,session) {
       
