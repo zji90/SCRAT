@@ -17,10 +17,13 @@ Imports:
     reshape2,
     pheatmap,
     scatterD3,
-    SCRATdata
 VignetteBuilder: knitr
 Suggests:
-    knitr
+    knitr,
+    SCRATdatahg19,
+    SCRATdatahg38,
+    SCRATdatamm9,
+    SCRATdatamm10
 Depends:
     R(>= 2.10.0)
 RoxygenNote: 5.0.1
