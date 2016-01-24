@@ -12,7 +12,10 @@ library(reshape2)
 library(pheatmap)
 library(scatterD3)
 library(DT)
-library(SCRATdata)
+library(SCRATdatahg19)
+library(SCRATdatahg38)
+library(SCRATdatamm9)
+library(SCRATdatamm10)
 
 options(shiny.maxRequestSize=10*1024^3)
 
@@ -30,8 +33,8 @@ shinyServer(function(input, output,session) {
                         filenum <- length(FileHandle$datapath)
                         if (!is.null(FileHandle)) {
                               withProgress(message = 'Reading in',detail="0%",{
-                                    datapath <- system.file("extdata",package="SCRATdata")
-                                    load(paste0(datapath,"/gr/",input$InputGenome,"/blacklist.rda"))
+                                    datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
+                                    load(paste0(datapath,"/gr/blacklist.rda"))
                                     for (i in 1:filenum) {
                                           incProgress(1/filenum,detail=paste0(round(i/filenum*100),"%"))
                                           name <- FileHandle$name[i]
@@ -124,10 +127,10 @@ shinyServer(function(input, output,session) {
                   isolate({
                         if (length(input$Sumselectmet) > 0) {
                               allres <- NULL
-                              datapath <- system.file("extdata",package="SCRATdata")
+                              datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
                               if ("TSS" %in% input$Sumselectmet) {
                                     withProgress(message = 'Counting Overlaps for TSS',{
-                                          load(paste0(datapath,"/gr/",input$InputGenome,"/generegion.rda"))
+                                          load(paste0(datapath,"/gr/generegion.rda"))
                                           gr <- promoters(resize(gr,1),as.numeric(input$SumTSSupregionbp),as.numeric(input$SumTSSdownregionbp))
                                           tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
                                           tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
@@ -142,7 +145,7 @@ shinyServer(function(input, output,session) {
                               }
 #                               if ("ENLO" %in% input$Sumselectmet) {
 #                                     withProgress(message = 'Counting Overlaps for ENCODE Loci',{
-#                                           load(paste0(datapath,"/gr/",input$InputGenome,"/ENLO.rda"))
+#                                           load(paste0(datapath,"/gr/ENLO.rda"))
 #                                           if (input$SumENLOreducetf) {
 #                                                 gr <- reduce(gr)
 #                                                 names(gr) <- paste0("ENLO:",seqnames(gr),":",start(gr),"-",end(gr))
@@ -169,7 +172,7 @@ shinyServer(function(input, output,session) {
 #                               }
                               if ("ENCL" %in% input$Sumselectmet) {
                                     withProgress(message = 'Counting Overlaps for ENCODE Cluster',{
-                                          load(paste0(datapath,"/gr/",input$InputGenome,"/ENCL",input$SumENCLclunum,".rda"))
+                                          load(paste0(datapath,"/gr/ENCL",input$SumENCLclunum,".rda"))
                                           tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
                                           tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
                                           if (input$Sumlogtf) {
@@ -184,7 +187,7 @@ shinyServer(function(input, output,session) {
                               if ("MOTIF" %in% input$Sumselectmet) {
                                     if ("TRANSFAC" %in% input$SumMOTIFselect) {
                                           withProgress(message = 'Counting Overlaps for TRANSFAC',{
-                                                load(paste0(datapath,"/gr/",input$InputGenome,"/transfac1.rda"))
+                                                load(paste0(datapath,"/gr/transfac1.rda"))
                                                 tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
                                                 tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
                                                 if (input$Sumlogtf) {
@@ -194,7 +197,7 @@ shinyServer(function(input, output,session) {
                                                       tmp <- tmp[rowMeans(tmp < as.numeric(input$Sumfilterreads)) < as.numeric(input$Sumfilterpercen)/100,,drop=F]       
                                                 }                        
                                                 allres <- rbind(allres,tmp)
-                                                load(paste0(datapath,"/gr/",input$InputGenome,"/transfac2.rda"))
+                                                load(paste0(datapath,"/gr/transfac2.rda"))
                                                 tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
                                                 tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
                                                 if (input$Sumlogtf) {
@@ -205,7 +208,7 @@ shinyServer(function(input, output,session) {
                                                 }                        
                                                 allres <- rbind(allres,tmp)
                                                 if (input$InputGenome %in% c("hg19","hg38")) {
-                                                      load(paste0(datapath,"/gr/",input$InputGenome,"/transfac3.rda"))
+                                                      load(paste0(datapath,"/gr/transfac3.rda"))
                                                       tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
                                                       tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
                                                       if (input$Sumlogtf) {
@@ -220,7 +223,7 @@ shinyServer(function(input, output,session) {
                                     }
                                     if ("JASPAR" %in% input$SumMOTIFselect) {
                                           withProgress(message = 'Counting Overlaps for JASPAR',{
-                                                load(paste0(datapath,"/gr/",input$InputGenome,"/jaspar1.rda"))
+                                                load(paste0(datapath,"/gr/jaspar1.rda"))
                                                 tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
                                                 tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
                                                 if (input$Sumlogtf) {
@@ -230,7 +233,7 @@ shinyServer(function(input, output,session) {
                                                       tmp <- tmp[rowMeans(tmp < as.numeric(input$Sumfilterreads)) < as.numeric(input$Sumfilterpercen)/100,,drop=F]       
                                                 }                        
                                                 allres <- rbind(allres,tmp)
-                                                load(paste0(datapath,"/gr/",input$InputGenome,"/jaspar2.rda"))
+                                                load(paste0(datapath,"/gr/jaspar2.rda"))
                                                 tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
                                                 tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
                                                 if (input$Sumlogtf) {
@@ -246,7 +249,7 @@ shinyServer(function(input, output,session) {
                               if ("GSEA" %in% input$Sumselectmet) {
                                     withProgress(message = 'Counting Overlaps for GSEA',{
                                           for (i in input$SumGSEAselect) {
-                                                load(paste0(datapath,"/gr/",input$InputGenome,"/GSEA",i,".rda"))
+                                                load(paste0(datapath,"/gr/GSEA",i,".rda"))
                                                 gr <- promoters(resize(gr,1),as.numeric(input$SumGSEAupregionbp),as.numeric(input$SumGSEAdownregionbp))             
                                                 tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
                                                 tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
@@ -533,25 +536,25 @@ shinyServer(function(input, output,session) {
                   isolate({
                         withProgress(message = 'Calculating correlation',{
                               ENCODEcounttable <- NULL
-                              datapath <- system.file("extdata",package="SCRATdata")
+                              datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
                               if ("TSS" %in% input$Sumselectmet) {
-                                    load(paste0(datapath,"/ENCODE/",input$InputGenome,"/generegion.rda"))
+                                    load(paste0(datapath,"/ENCODE/generegion.rda"))
                                     ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),])
                               }
 #                               if ("ENLO" %in% input$Sumselectmet) {
-#                                     load(paste0(datapath,"/ENCODE/",input$InputGenome,"/ENLO.rda"))
+#                                     load(paste0(datapath,"/ENCODE/ENLO.rda"))
 #                                     ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),])
 #                               }
                               if ("ENCL" %in% input$Sumselectmet) {
-                                    load(paste0(datapath,"/ENCODE/",input$InputGenome,"/ENCL",input$SumENCLclunum,".rda"))
+                                    load(paste0(datapath,"/ENCODE/ENCL",input$SumENCLclunum,".rda"))
                                     ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),])
                               }
                               if ("MOTIF" %in% input$Sumselectmet) {
-                                    load(paste0(datapath,"/ENCODE/",input$InputGenome,"/MOTIF.rda"))
+                                    load(paste0(datapath,"/ENCODE/MOTIF.rda"))
                                     ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),])
                               }
                               if ("GSEA" %in% input$Sumselectmet) {
-                                    load(paste0(datapath,"/ENCODE/",input$InputGenome,"/GSEA.rda"))
+                                    load(paste0(datapath,"/ENCODE/GSEA.rda"))
                                     ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),])
                               }
                               if (input$Sumlogtf) {
