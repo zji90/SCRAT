@@ -12,16 +12,33 @@ library(reshape2)
 library(pheatmap)
 library(scatterD3)
 library(DT)
-library(SCRATdatahg19)
-library(SCRATdatahg38)
-library(SCRATdatamm9)
-library(SCRATdatamm10)
 
 options(shiny.maxRequestSize=10*1024^10)
 
 shinyServer(function(input, output,session) {
       
       Maindata <- reactiveValues()
+      
+      output$InputGenomeui <- renderUI({
+            genomelist <- list()
+            if (require("SCRATdatahg19")) {
+                  genomelist[["hg19 (Human)"]] <- c("hg19")
+            }
+            if (require("SCRATdatahg38")) {
+                  genomelist[["hg38 (Human)"]] <- c("hg38")
+            }
+            if (require("SCRATdatamm9")) {
+                  genomelist[["mm9 (Mouse)"]] <- c("mm9")
+            }
+            if (require("SCRATdatamm10")) {
+                  genomelist[["mm10 (Mouse)"]] <- c("mm10")
+            }
+            
+            selectInput("InputGenome","",genomelist)
+            #list("hg19 (Human)"="hg19","hg38 (Human)"="hg38","mm9 (Mouse)"="mm9","mm10 (Mouse)"="mm10")
+      })
+      
+      
       
       ### Input ###
       observe({
@@ -561,6 +578,14 @@ shinyServer(function(input, output,session) {
                                     ENCODEcounttable <- log2(ENCODEcounttable + 1)
                               }
                               sumtable <- Maindata$sumtable[row.names(Maindata$sumtable) %in% row.names(ENCODEcounttable),]
+                              if (input$Sampbulkcombinetf) {
+                                    uniname <- sub("AlnRep.*$","",colnames(ENCODEcounttable))
+                                    ENCODEcounttable <- sapply(unique(uniname),function(uname) {
+                                          rowMeans(ENCODEcounttable[,uniname==uname,drop=F])
+                                    })
+                              } else {
+                                    colnames(ENCODEcounttable) <- sub("Aln","",colnames(ENCODEcounttable))
+                              }
                               corres <- t(sapply(1:ncol(sumtable), function(sumtableid) {
                                     sapply(1:ncol(ENCODEcounttable), function(ENCODEcounttableid) {
                                           cor(sumtable[,sumtableid],ENCODEcounttable[,ENCODEcounttableid])

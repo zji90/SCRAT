@@ -24,7 +24,7 @@ shinyUI(
                                 br(),
                                 wellPanel(
                                       h4("Select Genome"),
-                                      selectInput("InputGenome","",list("hg19 (Human)"="hg19","hg38 (Human)"="hg38","mm9 (Mouse)"="mm9","mm10 (Mouse)"="mm10"))
+                                      uiOutput("InputGenomeui")
                                 ),
                                 wellPanel(
                                       h4("Input Bam Files"),
@@ -163,6 +163,7 @@ shinyUI(
                                                        uiOutput("Sampvisoptionui2")
                                       ),
                                       conditionalPanel(condition="input.Sampmainmet=='Bulk'",
+                                                       checkboxInput("Sampbulkcombinetf","Combine replicates",value=F),
                                                        actionButton("Sampbulkrunbutton","Run comparison")              
                                       )
                                 )
