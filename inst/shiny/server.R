@@ -224,6 +224,7 @@ shinyServer(function(input, output,session) {
                                     if ("TRANSFAC" %in% input$SumMOTIFselect) {
                                           withProgress(message = 'Counting Overlaps for TRANSFAC',{
                                                 load(paste0(datapath,"/gr/transfac1.rda"))
+                                                gr <- flank(gr,as.numeric(input$SumMOTIFflank),both = T)
                                                 tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
                                                 tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
                                                 if (input$Sumlogtf) {
@@ -234,6 +235,7 @@ shinyServer(function(input, output,session) {
                                                 }                        
                                                 allres <- rbind(allres,tmp)
                                                 load(paste0(datapath,"/gr/transfac2.rda"))
+                                                gr <- flank(gr,as.numeric(input$SumMOTIFflank),both = T)
                                                 tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
                                                 tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
                                                 if (input$Sumlogtf) {
@@ -245,6 +247,7 @@ shinyServer(function(input, output,session) {
                                                 allres <- rbind(allres,tmp)
                                                 if (input$InputGenome %in% c("hg19","hg38")) {
                                                       load(paste0(datapath,"/gr/transfac3.rda"))
+                                                      gr <- flank(gr,as.numeric(input$SumMOTIFflank),both = T)
                                                       tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
                                                       tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
                                                       if (input$Sumlogtf) {
@@ -260,6 +263,7 @@ shinyServer(function(input, output,session) {
                                     if ("JASPAR" %in% input$SumMOTIFselect) {
                                           withProgress(message = 'Counting Overlaps for JASPAR',{
                                                 load(paste0(datapath,"/gr/jaspar1.rda"))
+                                                gr <- flank(gr,as.numeric(input$SumMOTIFflank),both = T)
                                                 tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
                                                 tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
                                                 if (input$Sumlogtf) {
@@ -270,6 +274,7 @@ shinyServer(function(input, output,session) {
                                                 }                        
                                                 allres <- rbind(allres,tmp)
                                                 load(paste0(datapath,"/gr/jaspar2.rda"))
+                                                gr <- flank(gr,as.numeric(input$SumMOTIFflank),both = T)
                                                 tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
                                                 tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
                                                 if (input$Sumlogtf) {

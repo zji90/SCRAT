@@ -96,7 +96,7 @@ shinyUI(
                                                        ),
                                                        conditionalPanel(condition="input.Sumdetailchoose=='MOTIF'",
                                                                         helpText('Motif sites were mapped to whole genome and filtered for potential TFBS using ENCODE DNase-seq data. For each motif, sum all reads overlapping any of its binding site. For Motif MA0040.1_Foxq1, the feature name will be MOTIF:MA0040.1_Foxq1'),
-                                                                        textInput("SumMOTIFflank","Take flank region of base pair","0"),
+                                                                        textInput("SumMOTIFflank","Take flank region of base pair","100"),
                                                                         checkboxGroupInput("SumMOTIFselect","Include motifs sites from",c("TRANSFAC","JASPAR"),selected = c("TRANSFAC","JASPAR")),
                                                                         helpText(a("TRANSFAC web site",href="http://www.gene-regulation.com/pub/databases.html",target="_blank")),
                                                                         helpText(a("JASPAR web site",href="http://jaspar.genereg.net/",target="_blank"))
