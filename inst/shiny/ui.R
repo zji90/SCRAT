@@ -150,6 +150,11 @@ shinyUI(
                                          actionButton("Sampnextstepbutton","Next Step"),align="center"),
                                 helpText("Samples will be clustered using hierarchical clustering using the features obtained in step 2. The clustering can be based on the PCA of the features or the original features."),
                                 br(),
+                                radioButtons("Sampuseallfeattf","",list("Use All Features in the Analysis"="All","Use Specific Feature Types in the Analysis"="Specific")),
+                                conditionalPanel(condition="input.Sampuseallfeattf=='Specific'",
+                                                 uiOutput("Sampselectfeattypeui")
+                                ), 
+                                helpText("Note: after changing selected feature type, please rerun all analysis. If no feature type is selected, all feature types will be used in the analsysis."),
                                 wellPanel(
                                       radioButtons("Sampmainmet","",list("Sample Clustering"="Clustering","Visualization"="Visualization","Compare with Bulk"="Bulk"))
                                 ),
@@ -160,10 +165,6 @@ shinyUI(
                                                                         uiOutput("Sampclupcanumui"),                                                                        
                                                                         actionButton("Sampclupcaoptbutton","Use optimal number of PCs.")
                                                        ),                                
-                                                       conditionalPanel(condition="input.Sampclumet=='Features'", 
-                                                                        checkboxInput("SampcluspecificFeattf","Select Specific Features",value=F),
-                                                                        uiOutput("SampcluFeatselectfeatui")
-                                                       ),                 
                                                        hr(),
                                                        checkboxInput("Sampclusimutf","Perform simulation test"),
                                                        actionButton("Sampclurunbutton","Perform Clustering"),
@@ -179,10 +180,6 @@ shinyUI(
                                       ),
                                       conditionalPanel(condition="input.Sampmainmet=='Bulk'",
                                                        checkboxInput("Sampbulkcombinetf","Combine replicates",value=F),
-                                                       radioButtons("Sampbulkuseallfeattf","",list("Use All Features"="All","Select Specific Features"="Specific")),
-                                                       conditionalPanel(condition="input.Sampbulkuseallfeattf=='Specific'",
-                                                                        uiOutput("Sampbulkselectfeattypeui")
-                                                       ),                                                       
                                                        actionButton("Sampbulkrunbutton","Run comparison")              
                                       )
                                 )
@@ -207,8 +204,8 @@ shinyUI(
                                 ),
                                 conditionalPanel(condition="input.Sampmainmet=='Bulk'",
                                                  tabsetPanel(
-                                                       tabPanel("Heatmap",downloadButton("Sampbulkcorplotdownload"),plotOutput("Sampbulkcorheatmap")),
-                                                       tabPanel("Table",downloadButton("Sampbulkcortabledownload"),DT:: dataTableOutput("Sampbulkcortable"))
+                                                       tabPanel("Heatmap",br(),downloadButton("Sampbulkcorplotdownload"),plotOutput("Sampbulkcorheatmap")),
+                                                       tabPanel("Table",br(),downloadButton("Sampbulkcortabledownload"),DT:: dataTableOutput("Sampbulkcortable"))
                                                  )
                                 )
                           )

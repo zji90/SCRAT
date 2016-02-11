@@ -149,9 +149,8 @@ shinyServer(function(input, output,session) {
                               if (!is.null(FileHandle)) {
                                     tmp <- read.table(FileHandle$datapath,sep="\t",header=T,as.is=T,row.names = 1)                                                                        
                                     tmp <- tmp[,colnames(tmp) != "CV"]
-                                    Maindata$sumtable <- as.matrix(tmp)
+                                    Maindata$allsumtable <- as.matrix(tmp)
                                     Maindata$sumtablenametype <- sapply(row.names(Maindata$sumtable),function(i) strsplit(i,":")[[1]][1])                              
-                                    Maindata$allpcares <- prcomp(t(Maindata$sumtable),center = T, scale = T)$x                              
                               }
                         })
                   })
@@ -317,9 +316,8 @@ shinyServer(function(input, output,session) {
                                           allres <- rbind(allres,tmp)
                                     })
                               }
-                              Maindata$sumtable <- allres                              
-                              Maindata$sumtablenametype <- sapply(row.names(Maindata$sumtable),function(i) strsplit(i,":")[[1]][1])
-                              Maindata$allpcares <- prcomp(t(Maindata$sumtable),center = T, scale = T)$x
+                              Maindata$allsumtable <- allres                              
+                              Maindata$sumtablenametype <- sapply(row.names(allres),function(i) strsplit(i,":")[[1]][1])
                         }
                   })
       })
@@ -332,13 +330,13 @@ shinyServer(function(input, output,session) {
       })
       
       output$Sumtableoutput <- DT::renderDataTable({
-            if (!is.null(Maindata$sumtable)) {
+            if (!is.null(Maindata$allsumtable)) {
                   if (input$Sumaddcv) {
-                        cv <- apply(Maindata$sumtable,1,sd)/rowMeans(Maindata$sumtable)                  
-                        tmp <- cbind(row.names(Maindata$sumtable),cv,Maindata$sumtable)
+                        cv <- apply(Maindata$allsumtable,1,sd)/rowMeans(Maindata$allsumtable)                  
+                        tmp <- cbind(row.names(Maindata$allsumtable),cv,Maindata$allsumtable)
                         colnames(tmp)[1:2] <- c("Feature","CV")
                   } else {                        
-                        tmp <- cbind(row.names(Maindata$sumtable),Maindata$sumtable)
+                        tmp <- cbind(row.names(Maindata$allsumtable),Maindata$allsumtable)
                         colnames(tmp)[1] <- "Feature"
                   }     
                   DT::datatable(tmp,filter="top",rownames = F, options = list(columnDefs = list(list(className="dt-body-left","targets"="_all"))))
@@ -349,11 +347,11 @@ shinyServer(function(input, output,session) {
             filename = function() { "Summarization.txt" },
             content = function(file) {       
                   if (input$Sumaddcv) {
-                        cv <- apply(Maindata$sumtable,1,sd)/rowMeans(Maindata$sumtable)                  
-                        tmp <- cbind(row.names(Maindata$sumtable),cv,Maindata$sumtable)
+                        cv <- apply(Maindata$allsumtable,1,sd)/rowMeans(Maindata$allsumtable)                  
+                        tmp <- cbind(row.names(Maindata$allsumtable),cv,Maindata$allsumtable)
                         colnames(tmp)[1:2] <- c("Feature","CV")                  
                   } else {                        
-                        tmp <- cbind(row.names(Maindata$sumtable),Maindata$sumtable)
+                        tmp <- cbind(row.names(Maindata$allsumtable),Maindata$allsumtable)
                         colnames(tmp)[1] <- "Feature"                  
                   }
                   write.table(tmp,file,row.names=F,quote=F,sep="\t")     
@@ -386,6 +384,17 @@ shinyServer(function(input, output,session) {
       
       ### Sample-level Analysis ###
       
+      observe({
+            if (!is.null(Maindata$allsumtable)) {
+                  if (input$Sampuseallfeattf=="All" | is.null(input$Sampselectfeattype)) {
+                        Maindata$sumtable <- Maindata$allsumtable
+                  } else {
+                        Maindata$sumtable <- Maindata$allsumtable[Maindata$sumtablenametype %in% input$Sampselectfeattype,,drop=F]
+                  }
+                  Maindata$allpcares <- prcomp(t(Maindata$sumtable),center = T, scale = T)$x      
+            }
+      })
+      
       output$Sampclupcanumui <- renderUI({
             if (!is.null(Maindata$sumtable))
                   selectInput("Sampclupcanum","Select number of PCs",2:min(nrow(Maindata$sumtable),ncol(Maindata$sumtable)),2)
@@ -417,12 +426,7 @@ shinyServer(function(input, output,session) {
                                           Maindata$samphclust <- hclust(dist(Maindata$pcares))
                                           data <- t(Maindata$pcares)
                                     } else {
-                                          if (!input$SampcluspecificFeattf) {                                                
-                                                group <- input$SampcluFeatselectgroup                                                
-                                                data <- Maindata$sumtable[Maindata$sumtablenametype %in% group,,drop=F]
-                                          } else if (input$SampcluspecificFeattf & length(input$SampcluFeatselectfeat) > 0) {
-                                                data <- Maindata$sumtable[input$SampcluFeatselectfeat,,drop=F]
-                                          }
+                                          data <- Maindata$sumtable
                                           Maindata$samphclust <- hclust(dist(t(data)))
                                     }
                                     x <- 2:min(20,ncol(Maindata$sumtable)-1)
@@ -484,14 +488,6 @@ shinyServer(function(input, output,session) {
                   points(Maindata$optclustnum,Maindata$hclustvarprop$varprop[which(Maindata$hclustvarprop$clunum==Maindata$optclustnum)],col="red",pch=19,cex=1.5)
                   text(Maindata$optclustnum,Maindata$hclustvarprop$varprop[which(Maindata$hclustvarprop$clunum==Maindata$optclustnum)] - 0.1 * (max(Maindata$hclustvarprop$varprop)-min(Maindata$hclustvarprop$varprop)),"Optimal Cluster Number",col="red",cex=1.2)
             }
-      })
-      
-      output$SampcluFeatselectfeatui <- renderUI({
-            if (input$SampcluspecificFeattf) {
-                  selectInput("SampcluFeatselectfeat","Select features (Initialization may take time)",row.names(Maindata$sumtable),multiple = T)      
-            } else {
-                  checkboxGroupInput("SampcluFeatselectgroup","Select types of features",unique(Maindata$sumtablenametype),selected=unique(Maindata$sumtablenametype))
-            }           
       })
       
       output$Sampcludendrogram <- renderPlot({
@@ -706,8 +702,8 @@ shinyServer(function(input, output,session) {
             }
       })
       
-      output$Sampbulkselectfeattypeui <- renderUI({
-            checkboxGroupInput("Sampbulkselectfeattype","",unique(Maindata$sumtablenametype),selected=unique(Maindata$sumtablenametype))
+      output$Sampselectfeattypeui <- renderUI({
+            checkboxGroupInput("Sampselectfeattype","",unique(Maindata$sumtablenametype),selected=unique(Maindata$sumtablenametype))
       })
       
       observe({
@@ -716,10 +712,10 @@ shinyServer(function(input, output,session) {
                         withProgress(message = 'Calculating correlation',{
                               ENCODEcounttable <- NULL
                               datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
-                              if (input$Sampbulkuseallfeattf=='All') {
+                              if (input$Sampuseallfeattf=='All') {
                                     cortype <- unique(Maindata$sumtablenametype)
                               } else {
-                                    cortype <- input$Sampbulkselectfeattype
+                                    cortype <- input$Sampselectfeattype
                               }
                               if ("TSS" %in% cortype) {
                                     load(paste0(datapath,"/ENCODE/generegion.rda"))
@@ -864,7 +860,7 @@ shinyServer(function(input, output,session) {
       
       output$FeatSumtext <- renderText({
             if (!is.null(Maindata$FeatFstat)) {
-                  paste("There are ",sum(Maindata$FeatFDR[,input$FeatSumselectcolname] < 0.05),"significant features, which is",mean(Maindata$FeatFDR[,input$FeatSumselectcolname] < 0.05),"percent of all features")
+                  paste("There are ",sum(Maindata$FeatFDR[,input$FeatSumselectcolname] < 0.05),"significant features, which is",round(mean(Maindata$FeatFDR[,input$FeatSumselectcolname] < 0.05),digits=4),"percent of all features")
             }
       })
       
