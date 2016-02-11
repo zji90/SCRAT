@@ -147,10 +147,10 @@ shinyServer(function(input, output,session) {
                         withProgress(message = 'Reading in...',{
                               FileHandle <- input$SumuploadsumtableFile                        
                               if (!is.null(FileHandle)) {
-                                    tmp <- read.table(FileHandle$datapath,sep="\t",header=T,as.is=T,row.names = 1)                                                                        
+                                    tmp <- read.table(FileHandle$datapath,sep="\t",header=T,as.is=T,row.names = 1)      
                                     tmp <- tmp[,colnames(tmp) != "CV"]
                                     Maindata$allsumtable <- as.matrix(tmp)
-                                    Maindata$sumtablenametype <- sapply(row.names(Maindata$sumtable),function(i) strsplit(i,":")[[1]][1])                              
+                                    Maindata$sumtablenametype <- sapply(row.names(Maindata$allsumtable),function(i) strsplit(i,":")[[1]][1])                              
                               }
                         })
                   })
