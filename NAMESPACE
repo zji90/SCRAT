@@ -2,6 +2,7 @@
 
 export(SCRATui)
 import(GenomicAlignments)
+import(d3heatmap)
 import(ggplot2)
 import(pheatmap)
 import(reshape2)

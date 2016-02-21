@@ -16,7 +16,8 @@ Imports:
     ggplot2,
     reshape2,
     pheatmap,
-    scatterD3
+    scatterD3,
+    d3heatmap
 VignetteBuilder: knitr
 Suggests:
     knitr,

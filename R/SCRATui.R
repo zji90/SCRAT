@@ -7,7 +7,7 @@
 #' However, it is highly recommended that the user interface be launched locally for faster running speed.
 #' 
 #' @export
-#' @import shiny GenomicAlignments ggplot2 reshape2 pheatmap scatterD3 
+#' @import shiny GenomicAlignments ggplot2 reshape2 pheatmap scatterD3 d3heatmap
 #' @author Zhicheng Ji, Weiqiang Zhou, Hongkai Ji <zji4@@zji4.edu>
 #' @examples
 #' \dontrun{
