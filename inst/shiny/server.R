@@ -760,7 +760,7 @@ shinyServer(function(input, output,session) {
       
       output$Sampbulkcorheatmap <- d3heatmap::renderD3heatmap({
             if (!is.null(Maindata$bulkcorres)) {
-                  d3heatmap::d3heatmap(Maindata$bulkcorres,dendrogram="none")
+                  d3heatmap::d3heatmap(Maindata$bulkcorres,dendrogram="none",color=colorRampPalette(c("blue", "red"))(100))
             }
       })
       
@@ -768,7 +768,7 @@ shinyServer(function(input, output,session) {
             filename = function() { 'Corheatmap.pdf' },
             content = function(file) {   
                   if (!is.null(Maindata$bulkcorres)) {
-                        pheatmap(Maindata$bulkcorres,cluster_rows = F,cluster_cols = F, filename = file, width=15, height=15)
+                        pheatmap(Maindata$bulkcorres,color=colorRampPalette(c("blue", "red"))(100),cluster_rows = F,cluster_cols = F, filename = file, width=15, height=15)
                   }
             }
       )
