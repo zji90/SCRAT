@@ -6,7 +6,7 @@
 ##       Maintainer:Zhicheng Ji (zji4@jhu.edu)      ##
 ######################################################
 library(shiny)
-#library(d3heatmap)
+library(d3heatmap)
 library(GenomicAlignments)
 library(ggplot2)
 library(reshape2)
@@ -147,7 +147,7 @@ shinyServer(function(input, output,session) {
                         withProgress(message = 'Reading in...',{
                               FileHandle <- input$SumuploadsumtableFile                        
                               if (!is.null(FileHandle)) {
-                                    tmp <- read.table(FileHandle$datapath,sep="\t",header=T,as.is=T,row.names = 1)      
+                                    tmp <- read.table(FileHandle$datapath,sep="\t",header=T,as.is=T,row.names = 1)                                                                        
                                     tmp <- tmp[,colnames(tmp) != "CV"]
                                     Maindata$allsumtable <- as.matrix(tmp)
                                     Maindata$sumtablenametype <- sapply(row.names(Maindata$allsumtable),function(i) strsplit(i,":")[[1]][1])                              
@@ -386,7 +386,7 @@ shinyServer(function(input, output,session) {
       
       observe({
             if (!is.null(Maindata$allsumtable)) {
-                  if (input$Sampuseallfeattf=="All" | is.null(input$Sampselectfeattype)) {
+                  if (is.null(input$Sampselectfeattype)) {
                         Maindata$sumtable <- Maindata$allsumtable
                   } else {
                         Maindata$sumtable <- Maindata$allsumtable[Maindata$sumtablenametype %in% input$Sampselectfeattype,,drop=F]
@@ -703,7 +703,7 @@ shinyServer(function(input, output,session) {
       })
       
       output$Sampselectfeattypeui <- renderUI({
-            checkboxGroupInput("Sampselectfeattype","",unique(Maindata$sumtablenametype),selected=unique(Maindata$sumtablenametype))
+            checkboxGroupInput("Sampselectfeattype","Select Feature Type",unique(Maindata$sumtablenametype),selected=unique(Maindata$sumtablenametype))
       })
       
       observe({
@@ -712,11 +712,7 @@ shinyServer(function(input, output,session) {
                         withProgress(message = 'Calculating correlation',{
                               ENCODEcounttable <- NULL
                               datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
-                              if (input$Sampuseallfeattf=='All') {
-                                    cortype <- unique(Maindata$sumtablenametype)
-                              } else {
-                                    cortype <- input$Sampselectfeattype
-                              }
+                              cortype <- input$Sampselectfeattype
                               if ("TSS" %in% cortype) {
                                     load(paste0(datapath,"/ENCODE/generegion.rda"))
                                     ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),])
@@ -762,11 +758,27 @@ shinyServer(function(input, output,session) {
             }
       })
       
-      output$Sampbulkcorheatmap <- renderPlot({
+      output$Sampbulkcorheatmap <- d3heatmap::renderD3heatmap({
             if (!is.null(Maindata$bulkcorres)) {
-                  pheatmap(Maindata$bulkcorres,cluster_rows = F,cluster_cols = F)
+                  d3heatmap::d3heatmap(Maindata$bulkcorres,dendrogram="none")
             }
       })
+      
+      output$Sampbulkcorplotdownload <- downloadHandler(
+            filename = function() { 'Corheatmap.pdf' },
+            content = function(file) {   
+                  if (!is.null(Maindata$bulkcorres)) {
+                        pheatmap(Maindata$bulkcorres,cluster_rows = F,cluster_cols = F, filename = file, width=15, height=15)
+                  }
+            }
+      )
+      
+      output$Sampbulkcortabledownload <- downloadHandler(
+            filename = function() { 'Cortable.csv' },
+            content = function(file) {   
+                  write.csv(Maindata$bulkcorres,file=file, quote=F)
+            }
+      )
       
       output$Sampbulkcortable <- DT::renderDataTable({
             if (!is.null(Maindata$bulkcorres)) {

@@ -150,11 +150,8 @@ shinyUI(
                                          actionButton("Sampnextstepbutton","Next Step"),align="center"),
                                 helpText("Samples will be clustered using hierarchical clustering using the features obtained in step 2. The clustering can be based on the PCA of the features or the original features."),
                                 br(),
-                                radioButtons("Sampuseallfeattf","",list("Use All Features in the Analysis"="All","Use Specific Feature Types in the Analysis"="Specific")),
-                                conditionalPanel(condition="input.Sampuseallfeattf=='Specific'",
-                                                 uiOutput("Sampselectfeattypeui")
-                                ), 
-                                helpText("Note: after changing selected feature type, please rerun all analysis. If no feature type is selected, all feature types will be used in the analsysis."),
+                                wellPanel(uiOutput("Sampselectfeattypeui"),
+                                          helpText("Select feature type to be included in the sample-level analysis. After changing selected feature type, please rerun all analysis. If no feature type is selected, all feature types will be used in the analsysis.")),
                                 wellPanel(
                                       radioButtons("Sampmainmet","",list("Sample Clustering"="Clustering","Visualization"="Visualization","Compare with Bulk"="Bulk"))
                                 ),
@@ -204,7 +201,7 @@ shinyUI(
                                 ),
                                 conditionalPanel(condition="input.Sampmainmet=='Bulk'",
                                                  tabsetPanel(
-                                                       tabPanel("Heatmap",br(),downloadButton("Sampbulkcorplotdownload"),plotOutput("Sampbulkcorheatmap")),
+                                                       tabPanel("Heatmap",br(),downloadButton("Sampbulkcorplotdownload"),d3heatmap::d3heatmapOutput("Sampbulkcorheatmap")),
                                                        tabPanel("Table",br(),downloadButton("Sampbulkcortabledownload"),DT:: dataTableOutput("Sampbulkcortable"))
                                                  )
                                 )
