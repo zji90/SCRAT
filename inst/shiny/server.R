@@ -10,6 +10,7 @@ library(d3heatmap)
 library(GenomicAlignments)
 library(ggplot2)
 library(reshape2)
+library(gplots)
 library(pheatmap)
 library(scatterD3)
 library(DT)
@@ -385,11 +386,12 @@ shinyServer(function(input, output,session) {
       ### Sample-level Analysis ###
       
       observe({
-            if (!is.null(Maindata$allsumtable)) {
-                  if (is.null(input$Sampselectfeattype)) {
+            if (input$MainMenu == "Step 3: Sample-level Analysis" && !is.null(Maindata$allsumtable)) {
+                  tmp <- Maindata$allsumtable[Maindata$sumtablenametype %in% input$Sampselectfeattype,,drop=F]
+                  if (nrow(tmp)==0) {
                         Maindata$sumtable <- Maindata$allsumtable
                   } else {
-                        Maindata$sumtable <- Maindata$allsumtable[Maindata$sumtablenametype %in% input$Sampselectfeattype,,drop=F]
+                        Maindata$sumtable <- tmp
                   }
                   Maindata$allpcares <- prcomp(t(Maindata$sumtable),center = T, scale = T)$x      
             }
@@ -760,7 +762,7 @@ shinyServer(function(input, output,session) {
       
       output$Sampbulkcorheatmap <- d3heatmap::renderD3heatmap({
             if (!is.null(Maindata$bulkcorres)) {
-                  d3heatmap::d3heatmap(Maindata$bulkcorres,dendrogram="none",color=colorRampPalette(c("blue", "red"))(100))
+                  d3heatmap::d3heatmap(Maindata$bulkcorres,color=colorRampPalette(c("blue", "red"))(100))
             }
       })
       
@@ -768,7 +770,9 @@ shinyServer(function(input, output,session) {
             filename = function() { 'Corheatmap.pdf' },
             content = function(file) {   
                   if (!is.null(Maindata$bulkcorres)) {
-                        pheatmap(Maindata$bulkcorres,color=colorRampPalette(c("blue", "red"))(100),cluster_rows = F,cluster_cols = F, filename = file, width=15, height=15)
+                        pdf(file, width=20, height=20)
+                        heatmap.2(Maindata$bulkcorres,col=colorRampPalette(c("blue", "red"))(100),trace="none",margins=c(10,10))
+                        dev.off()
                   }
             }
       )
