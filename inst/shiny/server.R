@@ -510,6 +510,29 @@ shinyServer(function(input, output,session) {
             }                       
       })
       
+      output$SampCluresdenddownloadbutton <- downloadHandler(
+            filename = function() { 'Dendrogram.pdf' },
+            content = function(file) {                  
+            if (!is.null(Maindata$samphclust)) {                  
+                  hcd = as.dendrogram(Maindata$samphclust)
+                  labelColors = c("red","blue","green","purple","orange","grey","skyblue")                  
+                  clusMember = cutree(Maindata$samphclust,k=as.numeric(input$SampCluresselectclunum))
+                  names(clusMember) <- colnames(Maindata$sumtable)                  
+                  colLab <- function(n) {
+                        if (is.leaf(n)) {
+                              a <- attributes(n)
+                              labCol <- labelColors[clusMember[which(names(clusMember) == a$label)]]
+                              attr(n, "nodePar") <- c(a$nodePar, lab.col = labCol)
+                        }
+                        n
+                  }                                   
+                  pdf(file,width=15,height=10)
+                  plot(dendrapply(hcd, colLab))                  
+                  dev.off()
+            }
+            }
+      )
+      
       output$Sampvisplotui <- renderUI({
             if (input$Sampvismet=="PCA") {
                   tagList(
@@ -536,9 +559,9 @@ shinyServer(function(input, output,session) {
             filename = function() { 'Samples.pdf' },
             content = function(file) {                  
                   if (input$Sampvismet=="PCA") {
-                        pdf(file)
+                        pdf(file,width=10,height=8)
                         drawdata <- data.frame(x=Maindata$allpcares[,as.numeric(input$SampvisPCAxpcid)],y=Maindata$allpcares[,as.numeric(input$SampvisPCAypcid)],Cluster=as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum))),stringsAsFactors = F)
-                        p1 <- ggplot(aes(x = x, y = y, color = Cluster),data=drawdata) + geom_point(size=3) + xlab(paste0("PCA",as.numeric(input$SampPCAxpcid))) + ylab(paste0("PCA",as.numeric(input$SampPCAypcid))) +
+                        p1 <- ggplot(aes(x = x, y = y, color = Cluster),data=drawdata) + geom_point(size=3) + xlab(paste0("PCA",as.numeric(input$SampvisPCAxpcid))) + ylab(paste0("PCA",as.numeric(input$SampvisPCAypcid))) +
                               theme(axis.line = element_line(colour = "black"),
                                     panel.grid.major = element_blank(),
                                     panel.grid.minor = element_blank(),
@@ -557,7 +580,7 @@ shinyServer(function(input, output,session) {
                         print(p1)
                         dev.off()
                   } else if (input$Sampvismet=="MDS") {
-                        pdf(file)
+                        pdf(file,width=10,height=8)
                         data <- t(Maindata$sumtable)
                         d <- dist(data)
                         fit <- cmdscale(d,eig=TRUE, k=min(20,ncol(Maindata$sumtable)-1))
@@ -582,7 +605,7 @@ shinyServer(function(input, output,session) {
                         dev.off()
                   } else if (input$Sampvismet=="Features") {
                         if (length(input$SampvisFeatselectfeat) == 1) {
-                              pdf(file)
+                              pdf(file,width=10,height=8)
                               data <- data.frame(Feature=Maindata$sumtable[input$SampvisFeatselectfeat,],Cluster=paste0("Cluster",cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum))))             
                               p1 <- ggplot(data, aes(Cluster, Feature)) + geom_boxplot() +
                                     theme(axis.line = element_line(colour = "black"),
@@ -609,7 +632,7 @@ shinyServer(function(input, output,session) {
                               rownames(annotation_col) = colnames(data)           
                               pheatmap(data[,Maindata$samphclust$order], annotation_col = annotation_col[Maindata$samphclust$order,,drop=F],cluster_rows=F,cluster_cols=F,filename = file)
                         } else if (length(input$SampvisFeatselectfeat) == 2) {                                
-                              pdf(file)
+                              pdf(file,width=10,height=8)
                               drawdata <- data.frame(x=Maindata$sumtable[input$SampvisFeatselectfeat[1],],y=Maindata$sumtable[input$SampvisFeatselectfeat[2],], Cluster = as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum))),stringsAsFactors = F)
                               p1 <- ggplot(aes(x = x, y = y, color = Cluster),data=drawdata) + geom_point(size=3) + xlab(input$SampvisFeatselectfeat[1]) + ylab(input$SampvisFeatselectfeat[2]) + 
                                     theme(axis.line = element_line(colour = "black"),
@@ -637,7 +660,7 @@ shinyServer(function(input, output,session) {
       
       output$SampvisPCAplot <- renderScatterD3({
             drawdata <- data.frame(x=Maindata$allpcares[,as.numeric(input$SampvisPCAxpcid)],y=Maindata$allpcares[,as.numeric(input$SampvisPCAypcid)],Cluster=as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum))),stringsAsFactors = F)
-            scatterD3(x = drawdata$x, y = drawdata$y, col_var = drawdata$Cluster, lab = row.names(Maindata$allpcares), xlab = paste0("PCA",as.numeric(input$SampPCAxpcid)), ylab = paste0("PCA",as.numeric(input$SampPCAypcid)), col_lab = "Cluster", transitions = TRUE)      
+            scatterD3(x = drawdata$x, y = drawdata$y, col_var = drawdata$Cluster, lab = row.names(Maindata$allpcares), xlab = paste0("PCA",as.numeric(input$SampvisPCAxpcid)), ylab = paste0("PCA",as.numeric(input$SampvisPCAypcid)), col_lab = "Cluster", transitions = TRUE)      
       },env=environment())
       
       output$SampvisMDSplot <- renderScatterD3({
@@ -771,7 +794,7 @@ shinyServer(function(input, output,session) {
             content = function(file) {   
                   if (!is.null(Maindata$bulkcorres)) {
                         pdf(file, width=20, height=20)
-                        heatmap.2(Maindata$bulkcorres,col=colorRampPalette(c("blue", "red"))(100),trace="none",margins=c(10,10))
+                        heatmap.2(Maindata$bulkcorres,col=colorRampPalette(c("blue", "red"))(100),trace="none",margins=c(10,10),lhei=c(1,8),lwid=c(1,8))
                         dev.off()
                   }
             }

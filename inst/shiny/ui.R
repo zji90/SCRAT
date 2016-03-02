@@ -186,9 +186,12 @@ shinyUI(
                                 conditionalPanel(condition="input.Sampmainmet=='Clustering'",
                                                  tabsetPanel(
                                                        tabPanel("Cluster plot",
+                                                                hr(),
+                                                                br(),
+                                                                downloadButton("SampCluresdownloadbutton","Save Clustering Table"),
+                                                                downloadButton("SampCluresdenddownloadbutton","Save Dendrogram"),
                                                                 uiOutput("SampCluresselectclunumui"),
-                                                                downloadButton("SampCluresdownloadbutton","Save Clustering Results"),
-                                                                plotOutput("Sampcludendrogram",height="600px",width="600px")
+                                                                plotOutput("Sampcludendrogram",height="600px",width="1000px")
                                                        ),
                                                        tabPanel("Optimal Cluster Number",
                                                                 plotOutput("Sampoptcluplot",width = "600px",height="600px")                                               
