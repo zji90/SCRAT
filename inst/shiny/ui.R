@@ -199,6 +199,11 @@ shinyUI(
                                                  )
                                 ),
                                 conditionalPanel(condition="input.Sampmainmet=='Visualization'",
+                                                 radioButtons("Sampvisplotcolortype","Color Option",list("Cluster"="Cluster","Sample Name"="Sample")),
+                                                 conditionalPanel(condition="input.Sampvisplotcolortype=='Sample'",
+                                                                  textInput("Sampvisplotsamplesep","Enter Separation Character"),
+                                                                  helpText("The separation character is used to identify the clusters using sample names. For example if the sample names are K562_1.bam,K562_2.bam,GM12878_1.bam,GM12878_2.bam, a separation character of '_' will separate the samples into two groups: K562 and GM12878")
+                                                                  ),
                                                  downloadButton("Sampvisplotdownload"),
                                                  uiOutput("Sampvisplotui") 
                                 ),

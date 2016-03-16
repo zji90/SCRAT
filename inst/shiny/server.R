@@ -659,7 +659,12 @@ shinyServer(function(input, output,session) {
       )
       
       output$SampvisPCAplot <- renderScatterD3({
-            drawdata <- data.frame(x=Maindata$allpcares[,as.numeric(input$SampvisPCAxpcid)],y=Maindata$allpcares[,as.numeric(input$SampvisPCAypcid)],Cluster=as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum))),stringsAsFactors = F)
+            if (input$Sampvisplotcolortype=="Cluster") {
+                  tmpclu <- as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum)))
+            } else {
+                  tmpclu <- as.factor(sapply(row.names(Maindata$allpcares),function(i) strsplit(i,input$Sampvisplotsamplesep)[[1]][1]))
+            }
+            drawdata <- data.frame(x=Maindata$allpcares[,as.numeric(input$SampvisPCAxpcid)],y=Maindata$allpcares[,as.numeric(input$SampvisPCAypcid)],Cluster=tmpclu,stringsAsFactors = F)
             scatterD3(x = drawdata$x, y = drawdata$y, col_var = drawdata$Cluster, lab = row.names(Maindata$allpcares), xlab = paste0("PCA",as.numeric(input$SampvisPCAxpcid)), ylab = paste0("PCA",as.numeric(input$SampvisPCAypcid)), col_lab = "Cluster", transitions = TRUE)      
       },env=environment())
       
@@ -669,16 +674,24 @@ shinyServer(function(input, output,session) {
             fit <- cmdscale(d,eig=TRUE, k=min(20,ncol(Maindata$sumtable)-1))
             x <- fit$points[,as.numeric(input$SampvisMDSxdimid)]
             y <- fit$points[,as.numeric(input$SampvisMDSydimid)]
-            cluster <- as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum)))
-            scatterD3(x = x, y = y, col_var = cluster, lab = row.names(data), xlab = paste0("Dimension",as.numeric(input$SampvisMDSxdimid)), ylab = paste0("Dimension",as.numeric(input$SampvisMDSydimid)), col_lab = "Cluster", transitions = TRUE)      
+            if (input$Sampvisplotcolortype=="Cluster") {
+                  tmpclu <- as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum)))
+            } else {
+                  tmpclu <- as.factor(sapply(row.names(Maindata$allpcares),function(i) strsplit(i,input$Sampvisplotsamplesep)[[1]][1]))
+            }
+            scatterD3(x = x, y = y, col_var = tmpclu, lab = row.names(data), xlab = paste0("Dimension",as.numeric(input$SampvisMDSxdimid)), ylab = paste0("Dimension",as.numeric(input$SampvisMDSydimid)), col_lab = "Cluster", transitions = TRUE)      
       },env=environment())
       
       output$SampvisFeatplotdim2 <- renderScatterD3({
             if (length(input$SampvisFeatselectfeat) == 2) {
                   x <- Maindata$sumtable[input$SampvisFeatselectfeat[1],]
                   y <- Maindata$sumtable[input$SampvisFeatselectfeat[2],]                  
-                  cluster <- as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum)))                  
-                  scatterD3(x = x, y = y, col_var = cluster, lab = colnames(Maindata$sumtable), xlab = input$SampvisFeatselectfeat[1], ylab = input$SampvisFeatselectfeat[2], col_lab = "Cluster", transitions = TRUE)
+                  if (input$Sampvisplotcolortype=="Cluster") {
+                        tmpclu <- as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum)))
+                  } else {
+                        tmpclu <- as.factor(sapply(row.names(Maindata$allpcares),function(i) strsplit(i,input$Sampvisplotsamplesep)[[1]][1]))
+                  }           
+                  scatterD3(x = x, y = y, col_var = tmpclu, lab = colnames(Maindata$sumtable), xlab = input$SampvisFeatselectfeat[1], ylab = input$SampvisFeatselectfeat[2], col_lab = "Cluster", transitions = TRUE)
             }            
       },env=environment())
       
