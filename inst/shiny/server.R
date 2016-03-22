@@ -562,7 +562,8 @@ shinyServer(function(input, output,session) {
                         pdf(file,width=10,height=8)
                         drawdata <- data.frame(x=Maindata$allpcares[,as.numeric(input$SampvisPCAxpcid)],y=Maindata$allpcares[,as.numeric(input$SampvisPCAypcid)],Cluster=as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum))),stringsAsFactors = F)
                         p1 <- ggplot(aes(x = x, y = y, color = Cluster),data=drawdata) + geom_point(size=3) + xlab(paste0("PCA",as.numeric(input$SampvisPCAxpcid))) + ylab(paste0("PCA",as.numeric(input$SampvisPCAypcid))) +
-                              theme(axis.line = element_line(colour = "black"),
+                              theme(axis.line.x = element_line(colour = "black"),
+                                    axis.line.y = element_line(colour = "black"),
                                     panel.grid.major = element_blank(),
                                     panel.grid.minor = element_blank(),
                                     panel.border = element_blank(),
@@ -586,7 +587,8 @@ shinyServer(function(input, output,session) {
                         fit <- cmdscale(d,eig=TRUE, k=min(20,ncol(Maindata$sumtable)-1))
                         drawdata <- data.frame(x = fit$points[,as.numeric(input$SampvisMDSxdimid)],y = fit$points[,as.numeric(input$SampvisMDSydimid)],Cluster = as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum))),stringsAsFactors = F)                        
                         p1 <- ggplot(aes(x = x, y = y, color = Cluster),data=drawdata) + geom_point(size=3) + xlab(paste0("Dimension",as.numeric(input$SampvisMDSxdimid))) + ylab(paste0("Dimension",as.numeric(input$SampvisMDSydimid))) +
-                              theme(axis.line = element_line(colour = "black"),
+                              theme(axis.line.x = element_line(colour = "black"),
+                                    axis.line.y = element_line(colour = "black"),
                                     panel.grid.major = element_blank(),
                                     panel.grid.minor = element_blank(),
                                     panel.border = element_blank(),
@@ -608,7 +610,8 @@ shinyServer(function(input, output,session) {
                               pdf(file,width=10,height=8)
                               data <- data.frame(Feature=Maindata$sumtable[input$SampvisFeatselectfeat,],Cluster=paste0("Cluster",cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum))))             
                               p1 <- ggplot(data, aes(Cluster, Feature)) + geom_boxplot() +
-                                    theme(axis.line = element_line(colour = "black"),
+                                    theme(axis.line.x = element_line(colour = "black"),
+                                          axis.line.y = element_line(colour = "black"),
                                           panel.grid.major = element_blank(),
                                           panel.grid.minor = element_blank(),
                                           panel.border = element_blank(),
@@ -635,7 +638,8 @@ shinyServer(function(input, output,session) {
                               pdf(file,width=10,height=8)
                               drawdata <- data.frame(x=Maindata$sumtable[input$SampvisFeatselectfeat[1],],y=Maindata$sumtable[input$SampvisFeatselectfeat[2],], Cluster = as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum))),stringsAsFactors = F)
                               p1 <- ggplot(aes(x = x, y = y, color = Cluster),data=drawdata) + geom_point(size=3) + xlab(input$SampvisFeatselectfeat[1]) + ylab(input$SampvisFeatselectfeat[2]) + 
-                                    theme(axis.line = element_line(colour = "black"),
+                                    theme(axis.line.x = element_line(colour = "black"),
+                                          axis.line.y = element_line(colour = "black"),
                                           panel.grid.major = element_blank(),
                                           panel.grid.minor = element_blank(),
                                           panel.border = element_blank(),
