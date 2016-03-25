@@ -6,6 +6,9 @@
 ##       Maintainer:Zhicheng Ji (zji4@jhu.edu)      ##
 ######################################################
 
+library(shiny)
+library(scatterD3)
+
 shinyUI(      
       navbarPage("SCRAT",
                  
@@ -203,9 +206,25 @@ shinyUI(
                                                  conditionalPanel(condition="input.Sampvisplotcolortype=='Sample'",
                                                                   textInput("Sampvisplotsamplesep","Enter Separation Character","."),
                                                                   helpText("The separation character is used to identify the clusters using sample names. For example if the sample names are K562_1.bam,K562_2.bam,GM12878_1.bam,GM12878_2.bam, a separation character of '_' will separate the samples into two groups: K562 and GM12878")
-                                                                  ),
+                                                 ),
                                                  downloadButton("Sampvisplotdownload"),
-                                                 uiOutput("Sampvisplotui") 
+                                                 conditionalPanel("input.Sampvismet=='PCA'",
+                                                                  helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details"),
+                                                                  scatterD3::scatterD3Output("SampvisPCAplot",width="700px",height="500px")      
+                                                                  ),
+                                                 conditionalPanel("input.Sampvismet=='MDS'",
+                                                                  helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details"),
+                                                                  scatterD3::scatterD3Output("SampvisMDSplot",width="700px",height="500px")      
+                                                 ),
+                                                 conditionalPanel("input.Sampvismet=='Features' && input.SampvisFeatselectfeat.length==1",
+                                                                  plotOutput("SampvisFeatplotdim1",width="600px",height="500px")
+                                                 ),
+                                                 conditionalPanel("input.Sampvismet=='Features' && input.SampvisFeatselectfeat.length==2",
+                                                                  scatterD3::scatterD3Output("SampvisFeatplotdim2",width="700px",height="500px")      
+                                                 ),
+                                                 conditionalPanel("input.Sampvismet=='Features' && input.SampvisFeatselectfeat.length > 2",
+                                                                  plotOutput("SampvisFeatplotdim3",width="600px",height="500px")
+                                                 )
                                 ),
                                 conditionalPanel(condition="input.Sampmainmet=='Bulk'",
                                                  tabsetPanel(
@@ -244,7 +263,7 @@ shinyUI(
                                                uiOutput("FeatSumselectcolnameui"),
                                                textOutput("FeatSumtext"),
                                                plotOutput("FeatSumplot")
-                                               )                                      
+                                      )                                      
                                 )                                
                           )
                  ),

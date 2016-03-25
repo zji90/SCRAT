@@ -1,7 +1,7 @@
 ######################################################
 ##                      SCRAT                       ##
 ##             Interactive User Interface           ##
-##                     UI File                      ##
+##                     Server File                  ##
 ##   Author:Zhicheng Ji, Weiqiang Zhou, Hongkai Ji  ##
 ##       Maintainer:Zhicheng Ji (zji4@jhu.edu)      ##
 ######################################################
@@ -513,47 +513,47 @@ shinyServer(function(input, output,session) {
       output$SampCluresdenddownloadbutton <- downloadHandler(
             filename = function() { 'Dendrogram.pdf' },
             content = function(file) {                  
-            if (!is.null(Maindata$samphclust)) {                  
-                  hcd = as.dendrogram(Maindata$samphclust)
-                  labelColors = c("red","blue","green","purple","orange","grey","skyblue")                  
-                  clusMember = cutree(Maindata$samphclust,k=as.numeric(input$SampCluresselectclunum))
-                  names(clusMember) <- colnames(Maindata$sumtable)                  
-                  colLab <- function(n) {
-                        if (is.leaf(n)) {
-                              a <- attributes(n)
-                              labCol <- labelColors[clusMember[which(names(clusMember) == a$label)]]
-                              attr(n, "nodePar") <- c(a$nodePar, lab.col = labCol)
-                        }
-                        n
-                  }                                   
-                  pdf(file,width=15,height=10)
-                  plot(dendrapply(hcd, colLab))                  
-                  dev.off()
-            }
+                  if (!is.null(Maindata$samphclust)) {                  
+                        hcd = as.dendrogram(Maindata$samphclust)
+                        labelColors = c("red","blue","green","purple","orange","grey","skyblue")                  
+                        clusMember = cutree(Maindata$samphclust,k=as.numeric(input$SampCluresselectclunum))
+                        names(clusMember) <- colnames(Maindata$sumtable)                  
+                        colLab <- function(n) {
+                              if (is.leaf(n)) {
+                                    a <- attributes(n)
+                                    labCol <- labelColors[clusMember[which(names(clusMember) == a$label)]]
+                                    attr(n, "nodePar") <- c(a$nodePar, lab.col = labCol)
+                              }
+                              n
+                        }                                   
+                        pdf(file,width=15,height=10)
+                        plot(dendrapply(hcd, colLab))                  
+                        dev.off()
+                  }
             }
       )
       
-      output$Sampvisplotui <- renderUI({
-            if (input$Sampvismet=="PCA") {
-                  tagList(
-                        helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details"),
-                        scatterD3::scatterD3Output("SampvisPCAplot",width="600px",height="500px")      
-                  )                  
-            } else if (input$Sampvismet=="MDS") {
-                  tagList(
-                        helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details"),
-                        scatterD3::scatterD3Output("SampvisMDSplot",width="600px",height="500px")      
-                  )  
-            } else if (input$Sampvismet=="Features") {
-                  if (length(input$SampvisFeatselectfeat) == 1) {
-                        plotOutput("SampvisFeatplotdim1",width="600px",height="500px")
-                  } else if (length(input$SampvisFeatselectfeat) == 2) {
-                        scatterD3::scatterD3Output("SampvisFeatplotdim2",width="600px",height="500px")      
-                  } else if (length(input$SampvisFeatselectfeat) > 2) {
-                        plotOutput("SampvisFeatplotdim3",width="600px",height="500px")
-                  }
-            }            
-      })
+      # output$Sampvisplotui <- renderUI({
+      #       if (input$Sampvismet=="PCA") {
+      #             tagList(
+      #                   helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details"),
+      #                   scatterD3::scatterD3Output("SampvisPCAplot",width="600px",height="500px")      
+      #             )                  
+      #       } else if (input$Sampvismet=="MDS") {
+      #             tagList(
+      #                   helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details"),
+      #                   scatterD3::scatterD3Output("SampvisMDSplot",width="600px",height="500px")      
+      #             )  
+      #       } else if (input$Sampvismet=="Features") {
+      #             if (length(input$SampvisFeatselectfeat) == 1) {
+      #                   plotOutput("SampvisFeatplotdim1",width="600px",height="500px")
+      #             } else if (length(input$SampvisFeatselectfeat) == 2) {
+      #                   scatterD3::scatterD3Output("SampvisFeatplotdim2",width="600px",height="500px")      
+      #             } else if (length(input$SampvisFeatselectfeat) > 2) {
+      #                   plotOutput("SampvisFeatplotdim3",width="600px",height="500px")
+      #             }
+      #       }            
+      # })
       
       output$Sampvisplotdownload <- downloadHandler(
             filename = function() { 'Samples.pdf' },
@@ -669,8 +669,8 @@ shinyServer(function(input, output,session) {
                   tmpclu <- as.factor(sapply(colnames(Maindata$sumtable),function(i) strsplit(i,input$Sampvisplotsamplesep,fixed=T)[[1]][1]))
             }
             drawdata <- data.frame(x=Maindata$allpcares[,as.numeric(input$SampvisPCAxpcid)],y=Maindata$allpcares[,as.numeric(input$SampvisPCAypcid)],Cluster=tmpclu,stringsAsFactors = F)
-            scatterD3(x = drawdata$x, y = drawdata$y, col_var = drawdata$Cluster, lab = row.names(Maindata$allpcares), xlab = paste0("PCA",as.numeric(input$SampvisPCAxpcid)), ylab = paste0("PCA",as.numeric(input$SampvisPCAypcid)), col_lab = "Cluster", transitions = TRUE)      
-      },env=environment())
+            scatterD3(x = drawdata$x, y = drawdata$y, col_lab = "Cluster", col_var = as.numeric(drawdata$Cluster), lab = row.names(Maindata$allpcares), xlab = paste0("PCA",as.numeric(input$SampvisPCAxpcid)), ylab = paste0("PCA",as.numeric(input$SampvisPCAypcid)), transitions = TRUE)   
+      })
       
       output$SampvisMDSplot <- renderScatterD3({
             data <- t(Maindata$sumtable)
@@ -683,8 +683,8 @@ shinyServer(function(input, output,session) {
             } else {
                   tmpclu <- as.factor(sapply(colnames(Maindata$sumtable),function(i) strsplit(i,input$Sampvisplotsamplesep,fixed=T)[[1]][1]))
             }
-            scatterD3(x = x, y = y, col_var = tmpclu, lab = row.names(data), xlab = paste0("Dimension",as.numeric(input$SampvisMDSxdimid)), ylab = paste0("Dimension",as.numeric(input$SampvisMDSydimid)), col_lab = "Cluster", transitions = TRUE)      
-      },env=environment())
+            scatterD3(x = x, y = y, col_var = as.numeric(tmpclu), lab = row.names(data), xlab = paste0("Dimension",as.numeric(input$SampvisMDSxdimid)), ylab = paste0("Dimension",as.numeric(input$SampvisMDSydimid)), col_lab = "Cluster", transitions = TRUE)      
+      })
       
       output$SampvisFeatplotdim2 <- renderScatterD3({
             if (length(input$SampvisFeatselectfeat) == 2) {
@@ -695,9 +695,9 @@ shinyServer(function(input, output,session) {
                   } else {
                         tmpclu <- as.factor(sapply(colnames(Maindata$sumtable),function(i) strsplit(i,input$Sampvisplotsamplesep,fixed=T)[[1]][1]))
                   }           
-                  scatterD3(x = x, y = y, col_var = tmpclu, lab = colnames(Maindata$sumtable), xlab = input$SampvisFeatselectfeat[1], ylab = input$SampvisFeatselectfeat[2], col_lab = "Cluster", transitions = TRUE)
+                  scatterD3(x = x, y = y, col_var = as.numeric(tmpclu), lab = colnames(Maindata$sumtable), xlab = input$SampvisFeatselectfeat[1], ylab = input$SampvisFeatselectfeat[2], col_lab = "Cluster", transitions = TRUE)
             }            
-      },env=environment())
+      })
       
       output$SampvisFeatplotdim1 <- renderPlot({
             if (length(input$SampvisFeatselectfeat) == 1) {
