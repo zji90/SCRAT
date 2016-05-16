@@ -32,7 +32,6 @@ shinyUI(
                                       h4("Input Bam Files"),
                                       fileInput('InputFile', 'Choose File', multiple = T, accept = ".bam"),
                                       checkboxInput("Inputblacklist","Filter black list",value = T),
-                                      checkboxInput("Inputcleanname","Clean up sample name",value = F),
                                       p(actionButton("Inputreadin","Read in"))      
                                 ),
                                 wellPanel(
@@ -112,7 +111,7 @@ shinyUI(
                                                                         helpText(a("Browse GSEA gene sets",href="http://software.broadinstitute.org/gsea/msigdb/genesets.jsp",target="_blank"))
                                                        ),
                                                        conditionalPanel(condition="input.Sumdetailchoose=='Upload'",
-                                                                        helpText('Upload BED file to define genomic regions'),
+                                                                        helpText('Upload BED file to define genomic regions. BED files are tab-delimited files. First column: chromosome name; second column: start site; third column: end site; Optional fourth column: feature id. If the fourth column is missing, then each row will be treated as seperate features. Otherwise rows with same feature id will be pulled together as a single feature.'),
                                                                         fileInput('SumuploadFile', 'Choose File', accept = ".bed"),
                                                                         p(actionButton("Sumuploadreadin","Read in")),
                                                                         textOutput("Sumuploaddetail")
@@ -144,43 +143,57 @@ shinyUI(
                                 tags$style(HTML('#Samppreviousstepbutton{font-weight: bold;color:blue}')),
                                 tags$style(HTML('#Sampnextstepbutton{font-weight: bold;color:blue}')),
                                 tags$style(HTML('#Sampclurunbutton{font-weight: bold;color:blue}')),
-                                tags$style(HTML('#Sampbulkrunbutton{font-weight: bold;color:blue}'))
+                                tags$style(HTML('#Sampbulkcorrunbutton{font-weight: bold;color:blue}'))
                           ),
                           hr(),
                           hr(),
                           sidebarPanel(
                                 fluidRow(actionButton("Samppreviousstepbutton","Previous Step"),
                                          actionButton("Sampnextstepbutton","Next Step"),align="center"),
-                                helpText("Samples will be clustered using hierarchical clustering using the features obtained in step 2. The clustering can be based on the PCA of the features or the original features."),
+                                helpText("Samples will be clustered using features obtained in step 2."),
                                 br(),
                                 wellPanel(uiOutput("Sampselectfeattypeui"),
-                                          helpText("Select feature type to be included in the sample-level analysis. After changing selected feature type, please rerun all analysis. If no feature type is selected, all feature types will be used in the analsysis.")),
+                                          helpText("Select feature type to be included in the sample-level analysis. If no feature type is selected, all feature types will be used in the analsysis."),
+                                          checkboxInput("Sampselectfeatincludebulktf","Include bulk samples"),
+                                          conditionalPanel(condition="input.Sampselectfeatincludebulktf==1",
+                                                           uiOutput("Sampselectfeatincludebulkui"))
+                                ),
                                 wellPanel(
-                                      radioButtons("Sampmainmet","",list("Sample Clustering"="Clustering","Visualization"="Visualization","Compare with Bulk"="Bulk"))
+                                      radioButtons("Sampmainmet","",list("Sample Clustering"="Clustering","Bulk Comparison"="Bulk"))
                                 ),
                                 wellPanel(
                                       conditionalPanel(condition="input.Sampmainmet=='Clustering'",
-                                                       radioButtons("Sampclumet","Select clustering method",list("PCA"="PCA","Features"="Features")),
-                                                       conditionalPanel(condition="input.Sampclumet=='PCA'",    
-                                                                        uiOutput("Sampclupcanumui"),                                                                        
-                                                                        actionButton("Sampclupcaoptbutton","Use optimal number of PCs.")
-                                                       ),                                
+                                                       checkboxInput("Sampcludimredscale","Scale all features of each cell before dimension reduction and clustering (zero mean and unit variance).",value=T),
+                                                       radioButtons("Sampcludimredmet","Dimension reduction method",list("t-SNE"="tSNE","PCA"="PCA","No Reduction"="None")),
+                                                       conditionalPanel(condition="input.Sampcludimredmet=='tSNE'",helpText("Note that t-SNE could take some time to run.")),
+                                                       conditionalPanel(condition="input.Sampcludimredmet=='PCA'",
+                                                                        checkboxInput("Sampcluoptdimnum","Automatically choose optimal number of dimensions",value=T)
+                                                       ),
+                                                       conditionalPanel(condition="(input.Sampcludimredmet=='PCA' && input.Sampcluoptdimnum==0)||input.Sampcludimredmet=='tSNE'",textInput("Sampcluchoosedimnum","Choose number of dimensions",2)),
+                                                       
                                                        hr(),
-                                                       checkboxInput("Sampclusimutf","Perform simulation test"),
+                                                       radioButtons("Sampcluclumet","Clustering method",list("K-means"="kmeans","Hierarchical Clustering"="hclust","Model-Based Clustering (mclust)"="mclust","Upload"="Upload")),
+                                                       conditionalPanel(condition="input.Sampcluclumet!='Sample'",
+                                                                        checkboxInput("Sampcluoptclunum","Automatically choose optimal number of clusters",value = T),
+                                                                        conditionalPanel(condition="input.Sampcluoptclunum==0",textInput("Sampcluchooseclunum","Choose number of clusters",2))
+                                                       ),
+                                                       conditionalPanel(condition="input.Sampcluclumet=='Upload'",
+                                                                        helpText("Upload a file specifying the cluster for each sample."),
+                                                                        helpText("First column: sample name; Second column: cluster ID"),
+                                                                        helpText("The sample names should be exactly the same as the names of the bam files. All bam files should be included."),
+                                                                        helpText("The two columns should be seperated by space"),
+                                                                        fileInput('SampcluInputFile', 'Choose File', accept = ".txt"),
+                                                                        actionButton('Sampcluuploadbutton',"Upload"),
+                                                                        uiOutput("Sampcluuploadstateui")
+                                                       ),
+                                                       hr(),
                                                        actionButton("Sampclurunbutton","Perform Clustering"),
                                                        hr()
                                                        
                                       ),
-                                      conditionalPanel(condition="input.Sampmainmet=='Visualization'",
-                                                       uiOutput("Sampvisoptionui1"),
-                                                       actionButton("Sampvisclunumoptbutton","Use optimal number of clusters"),
-                                                       hr(),
-                                                       radioButtons("Sampvismet","Select visualization method",c("PCA","MDS","Features")),
-                                                       uiOutput("Sampvisoptionui2")
-                                      ),
                                       conditionalPanel(condition="input.Sampmainmet=='Bulk'",
                                                        checkboxInput("Sampbulkcombinetf","Combine replicates",value=F),
-                                                       actionButton("Sampbulkrunbutton","Run comparison")              
+                                                       actionButton("Sampbulkcorrunbutton","Calculate Correlations")              
                                       )
                                 )
                                 ,width=3),
@@ -188,48 +201,39 @@ shinyUI(
                                 br(),
                                 conditionalPanel(condition="input.Sampmainmet=='Clustering'",
                                                  tabsetPanel(
-                                                       tabPanel("Cluster plot",
-                                                                hr(),
+                                                       tabPanel("Clustering Result",
                                                                 br(),
-                                                                downloadButton("SampCluresdownloadbutton","Save Clustering Table"),
-                                                                downloadButton("SampCluresdenddownloadbutton","Save Dendrogram"),
-                                                                uiOutput("SampCluresselectclunumui"),
-                                                                plotOutput("Sampcludendrogram",height="600px",width="1000px")
-                                                       ),
-                                                       tabPanel("Optimal Cluster Number",
-                                                                plotOutput("Sampoptcluplot",width = "600px",height="600px")                                               
+                                                                downloadButton("Sampcluplotdownload","Download Plot"),
+                                                                downloadButton("Sampclutabledownload","Download Clustering Table"),
+                                                                br(),
+                                                                wellPanel(
+                                                                      h4("Visualization Options"),
+                                                                      checkboxInput("Sampcluplotorifeattf","Plot original features",value=F),
+                                                                      uiOutput("Sampcluplotselectfeatui")
+                                                                ),
+                                                                uiOutput("Sampcluplotdim2optionui"),
+                                                                conditionalPanel("input.Sampcluplotselectfeat.length==2",
+                                                                                 scatterD3::scatterD3Output("Sampcluplotdim2",width="700px",height="500px")      
+                                                                ),
+                                                                conditionalPanel("input.Sampcluplotselectfeat.length==1",
+                                                                                 plotOutput("Sampcluplotdim1",width="600px",height="500px")
+                                                                ),
+                                                                conditionalPanel("input.Sampcluplotselectfeat.length > 2",
+                                                                                 plotOutput("Sampcluplotdim3",width="500px",height="2000px")
+                                                                )),
+                                                       tabPanel("Clustering Diagnosis",
+                                                                textInput("Sampclucludiagsimnum","Number of simulations","1000"),
+                                                                actionButton("Sampclucludiagrun","Run simulations to diagnose clustering results."),
+                                                                plotOutput("Sampclucludiagplot"),
+                                                                textOutput("SampclucludiagtrueSS"),
+                                                                textOutput("SampclucludiagsimuSS")
                                                        )
-                                                 )
-                                ),
-                                conditionalPanel(condition="input.Sampmainmet=='Visualization'",
-                                                 radioButtons("Sampvisplotcolortype","Color Option",list("Cluster"="Cluster","Sample Name"="Sample")),
-                                                 conditionalPanel(condition="input.Sampvisplotcolortype=='Sample'",
-                                                                  textInput("Sampvisplotsamplesep","Enter Separation Character","."),
-                                                                  helpText("The separation character is used to identify the clusters using sample names. For example if the sample names are K562_1.bam,K562_2.bam,GM12878_1.bam,GM12878_2.bam, a separation character of '_' will separate the samples into two groups: K562 and GM12878")
-                                                 ),
-                                                 downloadButton("Sampvisplotdownload"),
-                                                 conditionalPanel("input.Sampvismet=='PCA'",
-                                                                  helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details"),
-                                                                  scatterD3::scatterD3Output("SampvisPCAplot",width="700px",height="500px")      
-                                                                  ),
-                                                 conditionalPanel("input.Sampvismet=='MDS'",
-                                                                  helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details"),
-                                                                  scatterD3::scatterD3Output("SampvisMDSplot",width="700px",height="500px")      
-                                                 ),
-                                                 conditionalPanel("input.Sampvismet=='Features' && input.SampvisFeatselectfeat.length==1",
-                                                                  plotOutput("SampvisFeatplotdim1",width="600px",height="500px")
-                                                 ),
-                                                 conditionalPanel("input.Sampvismet=='Features' && input.SampvisFeatselectfeat.length==2",
-                                                                  scatterD3::scatterD3Output("SampvisFeatplotdim2",width="700px",height="500px")      
-                                                 ),
-                                                 conditionalPanel("input.Sampvismet=='Features' && input.SampvisFeatselectfeat.length > 2",
-                                                                  plotOutput("SampvisFeatplotdim3",width="600px",height="500px")
                                                  )
                                 ),
                                 conditionalPanel(condition="input.Sampmainmet=='Bulk'",
                                                  tabsetPanel(
-                                                       tabPanel("Heatmap",br(),downloadButton("Sampbulkcorplotdownload"),d3heatmap::d3heatmapOutput("Sampbulkcorheatmap")),
-                                                       tabPanel("Table",br(),downloadButton("Sampbulkcortabledownload"),DT:: dataTableOutput("Sampbulkcortable"))
+                                                       tabPanel("Heatmap",br(),downloadButton("Sampbulkcorplotdownload"),d3heatmap::d3heatmapOutput("Sampbulkcorheatmap"),width="500px",height="500px"),
+                                                       tabPanel("Table",br(),downloadButton("Sampbulkcortabledownload"),DT::dataTableOutput("Sampbulkcortable"))
                                                  )
                                 )
                           )
@@ -243,25 +247,21 @@ shinyUI(
                           hr(),
                           sidebarPanel(
                                 fluidRow(actionButton("Featpreviousstepbutton","Previous Step"),align="center"),
-                                helpText("For sample clustering, identify key features that mostly explains the between cluster variance. By default, the analysis will be performed on multiple cluster numbers to ensure that the results are robust to different cluster numbers"),
+                                helpText("Perform ANOVA tests to identify key features that mostly explains the between cluster variance. The sample clusters are obtained in step 3."),
                                 wellPanel(
-                                      h5("Choose number of sample clusters"),
-                                      uiOutput("Featsampclunumui"),                                      
-                                      actionButton("Featrunbutton","Calculate Feature Scores")                          
-                                ),
-                                wellPanel(
-                                      selectInput("Featviewtab","Select table to view",list("F statistic"="Fstat","FDR"="FDR")),
-                                      downloadButton("Featdownloadbutton")
+                                      checkboxInput("Featrunallclustertf","Perform ANOVA for all clusters",value=T),
+                                      conditionalPanel(condition="input.Featrunallclustertf==0",uiOutput("Featselectclusterui")),
+                                      actionButton("Featrunbutton","Perform ANOVA")      
                                 )
                                 ,width=3),
                           mainPanel(
                                 br(),
                                 tabsetPanel(
-                                      tabPanel("Results",br(),DT:: dataTableOutput("Featrestable")),
+                                      tabPanel("Results",br(),downloadButton("Featdownloadbutton"),br(),DT::dataTableOutput("Featrestable")),
                                       tabPanel("Summary",
                                                br(),
-                                               uiOutput("FeatSumselectcolnameui"),
                                                textOutput("FeatSumtext"),
+                                               radioButtons("Featviewtab","",c("Fstatistics","FDR")),
                                                plotOutput("FeatSumplot")
                                       )                                      
                                 )                                
@@ -276,7 +276,6 @@ shinyUI(
                                     h5("Maintainer: Zhicheng Ji (zji4@jhu.edu)"),
                                     h5("Version: 0.99.1")
                           )
-                          
                  )
                  ,id="MainMenu",position = "fixed-top",inverse=T)
 )

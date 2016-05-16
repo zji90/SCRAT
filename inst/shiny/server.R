@@ -14,7 +14,8 @@ library(gplots)
 library(pheatmap)
 library(scatterD3)
 library(DT)
-
+library(mclust)
+library(tsne)
 
 options(shiny.maxRequestSize=10*1024^10)
 
@@ -58,9 +59,6 @@ shinyServer(function(input, output,session) {
                                     for (i in 1:filenum) {
                                           incProgress(1/filenum,detail=paste0(round(i/filenum*100),"%"))
                                           name <- FileHandle$name[i]
-                                          if (input$Inputcleanname) {
-                                                name <- strsplit(name,"\\.")[[1]][1]
-                                          }
                                           bamfile <- BamFile(FileHandle$datapath[i])
                                           tmpsingle <- readGAlignments(bamfile)
                                           tmppair <- readGAlignmentPairs(bamfile)
@@ -128,9 +126,18 @@ shinyServer(function(input, output,session) {
                         FileHandle <- input$SumuploadFile                        
                         if (!is.null(FileHandle)) {
                               tmp <- read.table(FileHandle$datapath,as.is=T,sep="\t")
-                              gr <- GRanges(seqnames=tmp[,1],IRanges(start=tmp[,2],end=tmp[,3]))
-                              names(gr) <- paste0("UPLOAD:",tmp[,1],":",tmp[,2],"-",tmp[,3])
-                              Maindata$uploadgr <- gr
+                              if (ncol(tmp)==3) {
+                                    gr <- GRanges(seqnames=tmp[,1],IRanges(start=tmp[,2],end=tmp[,3]))
+                                    names(gr) <- paste0("UPLOAD:",tmp[,1],":",tmp[,2],"-",tmp[,3])
+                              } else if (ncol(tmp)==4) {
+                                    gr <- GRangesList()
+                                    for (i in unique(tmp[,4])) {
+                                          tmpgr <- GRanges(seqnames=tmp[tmp[,4]==i,1],IRanges(start=tmp[tmp[,4]==i,2],end=tmp[tmp[,4]==i,3]))
+                                          gr[[paste0("MOTIF:",i)]] <- tmpgr
+                                    }
+                              }
+                              Maindata$uploadgr <- gr      
+                              
                         }                        
                   })
             }
@@ -385,36 +392,87 @@ shinyServer(function(input, output,session) {
       
       ### Sample-level Analysis ###
       
+      #Sample clustering
+      
+      output$Sampselectfeattypeui <- renderUI({
+            checkboxGroupInput("Sampselectfeattype","Select Feature Type",unique(Maindata$sumtablenametype),selected=unique(Maindata$sumtablenametype))
+      })
+      
+      output$Sampselectfeatincludebulkui <- renderUI({
+            datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
+            load(paste0(datapath,"/ENCODE/ENCL1000.rda"))
+            selectInput("Sampselectfeatincludebulk","Select bulk samples",colnames(ENCODEcount),multiple = T)
+      })
+      
       observe({
             if (input$MainMenu == "Step 3: Sample-level Analysis" && !is.null(Maindata$allsumtable)) {
                   tmp <- Maindata$allsumtable[Maindata$sumtablenametype %in% input$Sampselectfeattype,,drop=F]
                   if (nrow(tmp)==0) {
-                        Maindata$sumtable <- Maindata$allsumtable
+                        tmp <- Maindata$allsumtable
+                  } 
+                  if (input$Sampselectfeatincludebulktf & length(input$Sampselectfeatincludebulk) > 0) {
+                        ENCODEcounttable <- NULL
+                        datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
+                        cortype <- input$Sampselectfeattype
+                        if ("TSS" %in% cortype) {
+                              load(paste0(datapath,"/ENCODE/generegion.rda"))
+                              ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),input$Sampselectfeatincludebulk,drop=F])
+                        }
+                        if (sum(grepl("ENCL",cortype))==1) {
+                              load(paste0(datapath,"/ENCODE/",cortype[grep("ENCL",cortype)],".rda"))
+                              ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),input$Sampselectfeatincludebulk,drop=F])
+                        }
+                        if ("MOTIF" %in% cortype) {
+                              load(paste0(datapath,"/ENCODE/MOTIF.rda"))
+                              ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),input$Sampselectfeatincludebulk,drop=F])
+                        }
+                        if ("GSEA" %in% cortype) {
+                              load(paste0(datapath,"/ENCODE/GSEA.rda"))
+                              ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),input$Sampselectfeatincludebulk,drop=F])
+                        }
+                        if (input$Sumlogtf) {
+                              ENCODEcounttable <- log2(ENCODEcounttable + 1)
+                        }
+                        Maindata$sumtable <- cbind(tmp,ENCODEcounttable[row.names(tmp),,drop=F])
                   } else {
                         Maindata$sumtable <- tmp
                   }
-                  Maindata$allpcares <- prcomp(t(Maindata$sumtable),center = T, scale = T)$x      
             }
       })
       
-      output$Sampclupcanumui <- renderUI({
-            if (!is.null(Maindata$sumtable))
-                  selectInput("Sampclupcanum","Select number of PCs",2:min(nrow(Maindata$sumtable),ncol(Maindata$sumtable)),2)
+      observe({
+            if (input$Sampcluuploadbutton > 0) {
+                  isolate({
+                        FileHandle <- input$SampcluInputFile                        
+                        if (!is.null(FileHandle)) {
+                              Maindata$uploadclulist <- read.table(FileHandle$datapath,as.is=T,sep=" ")
+                        }                        
+                  })
+            }
       })
       
-      observe({
-            if (input$Sampclupcaoptbutton > 0) {
-                  isolate({
-                        if (!is.null(Maindata$sumtable)) {
-                              x <- 1:min(ncol(Maindata$sumtable),nrow(Maindata$sumtable),20)
-                              sdev <- prcomp(t(Maindata$sumtable),center = T, scale = T)$sdev[x]
-                              optpoint <- which.min(sapply(x, function(i) {
-                                    x2 <- pmax(0,x-i)
-                                    sum(lm(sdev~x+x2)$residuals^2)
-                              }))
-                              updateSelectInput(session,"Sampclupcanum","Select number of PCs",2:min(nrow(Maindata$sumtable),ncol(Maindata$sumtable)),optpoint)
-                        }            
-                  })
+      output$Sampcluuploadstateui <- renderUI({
+            if (!is.null(Maindata$uploadclulist)) {
+                  if (sum(!colnames(Maindata$allsumtable) %in% Maindata$uploadclulist[,1]) == 0) {
+                        helpText("Upload Successful")
+                  } else {
+                        helpText("Something is wrong with the uploaded list. Please check!")
+                  }
+            }
+      })
+      
+      
+      
+      output$Sampcluplotdim2optionui <- renderUI({
+            if (!is.null(input$Sampcluplotselectfeat) && (length(input$Sampcluplotselectfeat)==2)) {
+                  if (input$Sampselectfeatincludebulktf && length(input$Sampselectfeatincludebulk) > 0) {
+                        tagList(radioButtons("Sampcluplotshowlabopt","",list("Show labels of all samples"="all","Show labels of bulk samples"="bulk","No label"="no")),
+                                helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details"))      
+                  } else {
+                        tagList(checkboxInput("Sampcluplotshowlabtf","Show label",value=T),
+                                helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details"))      
+                  }
+                  
             }
       })
       
@@ -423,333 +481,266 @@ shinyServer(function(input, output,session) {
                   isolate({
                         if (!is.null(Maindata$sumtable)) {
                               withProgress(message = 'Performing Clustering',{
-                                    if (input$Sampclumet=='PCA') {                              
-                                          Maindata$pcares <- Maindata$allpcares[,1:as.numeric(input$Sampclupcanum)]
-                                          Maindata$samphclust <- hclust(dist(Maindata$pcares))
-                                          data <- t(Maindata$pcares)
+                                    if (input$Sampcludimredscale) {
+                                          sumtable <- apply(Maindata$sumtable,2,scale)
+                                          dimnames(sumtable) <- dimnames(Maindata$sumtable)
                                     } else {
-                                          data <- Maindata$sumtable
-                                          Maindata$samphclust <- hclust(dist(t(data)))
+                                          sumtable <- Maindata$sumtable
                                     }
-                                    x <- 2:min(20,ncol(Maindata$sumtable)-1)
-                                    y <- sapply(x, function(k) {
-                                          clu <- cutree(Maindata$samphclust, k)
-                                          cluSS <- sum(sapply(unique(clu),function(i) {
-                                                rowSums((sweep(data[,clu==i,drop=F],1,rowMeans(data[,clu==i,drop=F]),"-"))^2)
-                                          }))
-                                          1-cluSS/sum((sweep(data,1,rowMeans(data),"-"))^2)            
-                                    })
-                                    if (input$Sampclusimutf) {
-                                          Maindata$hclustvarpropsimu <- rowMeans(sapply(1:1000,function(d) {
-                                                simudata <- t(apply(data,1,sample))
-                                                clustres <- hclust(dist(t(simudata)))
-                                                sapply(x, function(k) {
-                                                      clu <- cutree(clustres, k)
+                                    if (input$Sampcludimredmet=='PCA') {                              
+                                          pcares <- prcomp(t(sumtable),scale. = T)
+                                          if (input$Sampcluoptdimnum) {
+                                                var <- (pcares$sdev)^2
+                                                pcadim <- max(2,which.max(which(var/sum(var) > 0.05)))
+                                          } else {
+                                                pcadim <- as.numeric(input$Sampcluchoosedimnum)
+                                          }
+                                          tmp <- pcares$x[,1:pcadim]
+                                          colnames(tmp) <- paste0("PCA",1:ncol(tmp))
+                                          Maindata$reducedata <- tmp
+                                    } else if (input$Sampcludimredmet=='MDS') {
+                                          Maindata$reducedata <- cmdscale(dist(t(sumtable)),k=as.numeric(input$Sampcluchoosedimnum))
+                                    } else if (input$Sampcludimredmet=='tSNE') {
+                                          set.seed(12345)
+                                          tmp <- tsne(dist(t(sumtable)),k=as.numeric(input$Sampcluchoosedimnum))
+                                          row.names(tmp) <- colnames(sumtable)
+                                          colnames(tmp) <- paste0("tSNE",1:ncol(tmp))
+                                          Maindata$reducedata <- tmp
+                                    } else {
+                                          Maindata$reducedata <- t(sumtable)
+                                    }
+                                    if (input$Sampcluclumet=="kmeans") {
+                                          if (input$Sampcluoptclunum) {
+                                                x <- 2:min(20,ncol(Maindata$sumtable)-1)
+                                                reducedata <- Maindata$reducedata
+                                                y <- sapply(x, function(k) {
+                                                      set.seed(12345)
+                                                      clu <- kmeans(reducedata,k,iter.max = 100)$cluster
                                                       cluSS <- sum(sapply(unique(clu),function(i) {
-                                                            rowSums((sweep(simudata[,clu==i,drop=F],1,rowMeans(simudata[,clu==i,drop=F]),"-"))^2)
+                                                            sum(rowSums(sweep(reducedata[clu==i,,drop=F],2,colMeans(reducedata[clu==i,,drop=F]),"-")^2))
                                                       }))
-                                                      1-cluSS/sum((sweep(simudata,1,rowMeans(simudata),"-"))^2)            
-                                                })
-                                          }))      
+                                                      1-cluSS/sum((sweep(reducedata,2,colMeans(reducedata),"-"))^2)
+                                                })      
+                                                clunum <- x[which.max(y > 0.7)]
+                                          } else {
+                                                clunum <- as.numeric(input$Sampcluchooseclunum)
+                                          }
+                                          set.seed(12345)
+                                          Maindata$cluster <- kmeans(Maindata$reducedata,clunum,iter.max = 100)$cluster
+                                    } else if (input$Sampcluclumet=="hclust") {
+                                          datahclust <- hclust(dist(Maindata$reducedata))
+                                          if (input$Sampcluoptclunum) {
+                                                x <- 2:min(20,ncol(Maindata$sumtable)-1)
+                                                reducedata <- Maindata$reducedata
+                                                y <- sapply(x, function(k) {
+                                                      clu <- cutree(datahclust,k)
+                                                      cluSS <- sum(sapply(unique(clu),function(i) {
+                                                            sum(rowSums(sweep(reducedata[clu==i,,drop=F],2,colMeans(reducedata[clu==i,,drop=F]),"-")^2))
+                                                      }))
+                                                      1-cluSS/sum((sweep(reducedata,2,colMeans(reducedata),"-"))^2)
+                                                })      
+                                                clunum <- x[which.max(y > 0.7)]
+                                          } else {
+                                                clunum <- as.numeric(input$Sampcluchooseclunum)
+                                          }
+                                          Maindata$cluster <- cutree(datahclust,clunum)
+                                    } else if (input$Sampcluclumet=="mclust") {
+                                          if (input$Sampcluoptclunum) {
+                                                x <- 2:min(20,ncol(Maindata$sumtable)-1)
+                                                clunum <- tryCatch(Mclust(Maindata$reducedata,G=x,modelNames="VVV",priorControl(functionName="defaultPrior", shrinkage=0.1))$G,warning=function(w) {}, error=function(e) {})
+                                          } else {
+                                                clunum <- as.numeric(input$Sampcluchooseclunum)
+                                          }
+                                          res <- tryCatch(Mclust(Maindata$reducedata,G=clunum,modelNames="VVV",priorControl(functionName="defaultPrior", shrinkage=0.1)),warning=function(w) {}, error=function(e) {})
+                                          Maindata$cluster <- tryCatch(apply(res$z,1,which.max),warning=function(w) {}, error=function(e) {})
                                     } else {
-                                          Maindata$hclustvarpropsimu <- NULL
+                                          Maindata$cluster <- Maindata$uploadclulist[match(colnames(Maindata$sumtable),Maindata$uploadclulist[,1]),2]
                                     }
-                                    Maindata$hclustvarprop <- data.frame(clunum=x,varprop=y)
-                                    Maindata$optclustnum <- x[which.min(sapply(x, function(i) {                                          
-                                          x2 <- pmax(0,x-i)
-                                          sum(lm(y~x+x2)$residuals^2)
-                                    }))]
                               })
                         }
                   })
             }
       })
       
-      output$SampCluresselectclunumui <- renderUI({
-            sliderInput("SampCluresselectclunum","Select number of clusters",2,ncol(Maindata$sumtable)-1,2,step = 1)
-      })
-      
-      
-      output$SampCluresdownloadbutton <- downloadHandler(
-            filename = function() { "Clusterresults.txt" },
-            content = function(file) {                  
-                  tmp <- as.character(cutree(Maindata$samphclust,k=as.numeric(input$SampCluresselectclunum)))                  
-                  write.table(data.frame(Sample=colnames(Maindata$sumtable),Cluster=tmp),file,row.names=F,quote=F,sep="\t")     
-            }
-      )
-      
-      output$Sampoptcluplot <- renderPlot({
-            if (!is.null(Maindata$hclustvarpropsimu)) {
-                  plot(Maindata$hclustvarprop$clunum,Maindata$hclustvarprop$varprop,xlab="Cluster Number",ylab="Proportion of variance explained",pch=19,cex=1.2,cex.lab=1.2,ylim=c(0.95*min(Maindata$hclustvarprop$varprop,Maindata$hclustvarpropsimu),1.05*max(Maindata$hclustvarprop$varprop,Maindata$hclustvarpropsimu)))
-                  points(Maindata$optclustnum,Maindata$hclustvarprop$varprop[which(Maindata$hclustvarprop$clunum==Maindata$optclustnum)],col="red",pch=19,cex=1.5)
-                  points(Maindata$hclustvarprop$clunum,Maindata$hclustvarpropsimu,col="blue",cex=1.2,pch=19)
-                  text(Maindata$optclustnum,Maindata$hclustvarprop$varprop[which(Maindata$hclustvarprop$clunum==Maindata$optclustnum)] - 0.1 * (max(Maindata$hclustvarprop$varprop)-min(Maindata$hclustvarprop$varprop)),"Optimal Cluster Number",col="red",cex=1.2)
-                  legend("topleft",c("True data","Simulated data"),col=c("black","blue"),pch=c(19,19))      
-            } else {
-                  plot(Maindata$hclustvarprop$clunum,Maindata$hclustvarprop$varprop,xlab="Cluster Number",ylab="Proportion of variance explained",pch=19,cex=1.2,cex.lab=1.2,ylim=c(0.95*min(Maindata$hclustvarprop$varprop),1.05*max(Maindata$hclustvarprop$varprop)))
-                  points(Maindata$optclustnum,Maindata$hclustvarprop$varprop[which(Maindata$hclustvarprop$clunum==Maindata$optclustnum)],col="red",pch=19,cex=1.5)
-                  text(Maindata$optclustnum,Maindata$hclustvarprop$varprop[which(Maindata$hclustvarprop$clunum==Maindata$optclustnum)] - 0.1 * (max(Maindata$hclustvarprop$varprop)-min(Maindata$hclustvarprop$varprop)),"Optimal Cluster Number",col="red",cex=1.2)
-            }
-      })
-      
-      output$Sampcludendrogram <- renderPlot({
-            if (!is.null(Maindata$samphclust)) {                  
-                  hcd = as.dendrogram(Maindata$samphclust)
-                  labelColors = c("red","blue","green","purple","orange","grey","skyblue")                  
-                  clusMember = cutree(Maindata$samphclust,k=as.numeric(input$SampCluresselectclunum))
-                  names(clusMember) <- colnames(Maindata$sumtable)                  
-                  colLab <- function(n) {
-                        if (is.leaf(n)) {
-                              a <- attributes(n)
-                              labCol <- labelColors[clusMember[which(names(clusMember) == a$label)]]
-                              attr(n, "nodePar") <- c(a$nodePar, lab.col = labCol)
-                        }
-                        n
-                  }                                    
-                  plot(dendrapply(hcd, colLab))                  
-            }                       
-      })
-      
-      output$SampCluresdenddownloadbutton <- downloadHandler(
-            filename = function() { 'Dendrogram.pdf' },
-            content = function(file) {                  
-                  if (!is.null(Maindata$samphclust)) {                  
-                        hcd = as.dendrogram(Maindata$samphclust)
-                        labelColors = c("red","blue","green","purple","orange","grey","skyblue")                  
-                        clusMember = cutree(Maindata$samphclust,k=as.numeric(input$SampCluresselectclunum))
-                        names(clusMember) <- colnames(Maindata$sumtable)                  
-                        colLab <- function(n) {
-                              if (is.leaf(n)) {
-                                    a <- attributes(n)
-                                    labCol <- labelColors[clusMember[which(names(clusMember) == a$label)]]
-                                    attr(n, "nodePar") <- c(a$nodePar, lab.col = labCol)
-                              }
-                              n
-                        }                                   
-                        pdf(file,width=15,height=10)
-                        plot(dendrapply(hcd, colLab))                  
-                        dev.off()
-                  }
-            }
-      )
-      
-      # output$Sampvisplotui <- renderUI({
-      #       if (input$Sampvismet=="PCA") {
-      #             tagList(
-      #                   helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details"),
-      #                   scatterD3::scatterD3Output("SampvisPCAplot",width="600px",height="500px")      
-      #             )                  
-      #       } else if (input$Sampvismet=="MDS") {
-      #             tagList(
-      #                   helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details"),
-      #                   scatterD3::scatterD3Output("SampvisMDSplot",width="600px",height="500px")      
-      #             )  
-      #       } else if (input$Sampvismet=="Features") {
-      #             if (length(input$SampvisFeatselectfeat) == 1) {
-      #                   plotOutput("SampvisFeatplotdim1",width="600px",height="500px")
-      #             } else if (length(input$SampvisFeatselectfeat) == 2) {
-      #                   scatterD3::scatterD3Output("SampvisFeatplotdim2",width="600px",height="500px")      
-      #             } else if (length(input$SampvisFeatselectfeat) > 2) {
-      #                   plotOutput("SampvisFeatplotdim3",width="600px",height="500px")
-      #             }
-      #       }            
-      # })
-      
-      output$Sampvisplotdownload <- downloadHandler(
-            filename = function() { 'Samples.pdf' },
-            content = function(file) {                  
-                  if (input$Sampvismet=="PCA") {
-                        pdf(file,width=10,height=8)
-                        drawdata <- data.frame(x=Maindata$allpcares[,as.numeric(input$SampvisPCAxpcid)],y=Maindata$allpcares[,as.numeric(input$SampvisPCAypcid)],Cluster=as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum))),stringsAsFactors = F)
-                        p1 <- ggplot(aes(x = x, y = y, color = Cluster),data=drawdata) + geom_point(size=3) + xlab(paste0("PCA",as.numeric(input$SampvisPCAxpcid))) + ylab(paste0("PCA",as.numeric(input$SampvisPCAypcid))) +
-                              theme(axis.line.x = element_line(colour = "black"),
-                                    axis.line.y = element_line(colour = "black"),
-                                    panel.grid.major = element_blank(),
-                                    panel.grid.minor = element_blank(),
-                                    panel.border = element_blank(),
-                                    panel.background = element_blank(),
-                                    axis.text.x = element_text(size=17,color="black"),
-                                    axis.text.y = element_text(size=17,color='black'),
-                                    axis.title.x = element_text(size=20,vjust=-1),
-                                    axis.title.y = element_text(size=20,vjust=1),
-                                    plot.margin = unit(c(1,1,1,1), "cm"),
-                                    legend.text = element_text(size=15),
-                                    legend.title = element_text(size=15),
-                                    legend.position = "right",
-                                    legend.key.size=unit(1,"cm")
-                              )
-                        print(p1)
-                        dev.off()
-                  } else if (input$Sampvismet=="MDS") {
-                        pdf(file,width=10,height=8)
-                        data <- t(Maindata$sumtable)
-                        d <- dist(data)
-                        fit <- cmdscale(d,eig=TRUE, k=min(20,ncol(Maindata$sumtable)-1))
-                        drawdata <- data.frame(x = fit$points[,as.numeric(input$SampvisMDSxdimid)],y = fit$points[,as.numeric(input$SampvisMDSydimid)],Cluster = as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum))),stringsAsFactors = F)                        
-                        p1 <- ggplot(aes(x = x, y = y, color = Cluster),data=drawdata) + geom_point(size=3) + xlab(paste0("Dimension",as.numeric(input$SampvisMDSxdimid))) + ylab(paste0("Dimension",as.numeric(input$SampvisMDSydimid))) +
-                              theme(axis.line.x = element_line(colour = "black"),
-                                    axis.line.y = element_line(colour = "black"),
-                                    panel.grid.major = element_blank(),
-                                    panel.grid.minor = element_blank(),
-                                    panel.border = element_blank(),
-                                    panel.background = element_blank(),
-                                    axis.text.x = element_text(size=17,color="black"),
-                                    axis.text.y = element_text(size=17,color='black'),
-                                    axis.title.x = element_text(size=20,vjust=-1),
-                                    axis.title.y = element_text(size=20,vjust=1),
-                                    plot.margin = unit(c(1,1,1,1), "cm"),
-                                    legend.text = element_text(size=15),
-                                    legend.title = element_text(size=15),
-                                    legend.position = "right",
-                                    legend.key.size=unit(1,"cm")
-                              )
-                        print(p1)
-                        dev.off()
-                  } else if (input$Sampvismet=="Features") {
-                        if (length(input$SampvisFeatselectfeat) == 1) {
-                              pdf(file,width=10,height=8)
-                              data <- data.frame(Feature=Maindata$sumtable[input$SampvisFeatselectfeat,],Cluster=paste0("Cluster",cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum))))             
-                              p1 <- ggplot(data, aes(Cluster, Feature)) + geom_boxplot() +
-                                    theme(axis.line.x = element_line(colour = "black"),
-                                          axis.line.y = element_line(colour = "black"),
-                                          panel.grid.major = element_blank(),
-                                          panel.grid.minor = element_blank(),
-                                          panel.border = element_blank(),
-                                          panel.background = element_blank(),
-                                          axis.text.x = element_text(size=17,color="black"),
-                                          axis.text.y = element_text(size=17,color='black'),
-                                          axis.title.x = element_text(size=20,vjust=-1),
-                                          axis.title.y = element_text(size=20,vjust=1),
-                                          plot.margin = unit(c(1,1,1,1), "cm"),
-                                          legend.text = element_text(size=15),
-                                          legend.title = element_text(size=15),
-                                          legend.position = "right",
-                                          legend.key.size=unit(1,"cm")
-                                    )
-                              print(p1)
-                              dev.off()
-                        } else if (length(input$SampvisFeatselectfeat) > 2) {
-                              data <- Maindata$sumtable[input$SampvisFeatselectfeat,]
-                              Cluster=cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum))
-                              annotation_col = data.frame(Cluster = as.factor(Cluster))
-                              rownames(annotation_col) = colnames(data)           
-                              pheatmap(data[,Maindata$samphclust$order], annotation_col = annotation_col[Maindata$samphclust$order,,drop=F],cluster_rows=F,cluster_cols=F,filename = file)
-                        } else if (length(input$SampvisFeatselectfeat) == 2) {                                
-                              pdf(file,width=10,height=8)
-                              drawdata <- data.frame(x=Maindata$sumtable[input$SampvisFeatselectfeat[1],],y=Maindata$sumtable[input$SampvisFeatselectfeat[2],], Cluster = as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum))),stringsAsFactors = F)
-                              p1 <- ggplot(aes(x = x, y = y, color = Cluster),data=drawdata) + geom_point(size=3) + xlab(input$SampvisFeatselectfeat[1]) + ylab(input$SampvisFeatselectfeat[2]) + 
-                                    theme(axis.line.x = element_line(colour = "black"),
-                                          axis.line.y = element_line(colour = "black"),
-                                          panel.grid.major = element_blank(),
-                                          panel.grid.minor = element_blank(),
-                                          panel.border = element_blank(),
-                                          panel.background = element_blank(),
-                                          axis.text.x = element_text(size=17,color="black"),
-                                          axis.text.y = element_text(size=17,color='black'),
-                                          axis.title.x = element_text(size=20,vjust=-1),
-                                          axis.title.y = element_text(size=20,vjust=1),
-                                          plot.margin = unit(c(1,1,1,1), "cm"),
-                                          legend.text = element_text(size=15),
-                                          legend.title = element_text(size=15),
-                                          legend.position = "right",
-                                          legend.key.size=unit(1,"cm")
-                                    )
-                              print(p1)
-                              dev.off()
-                        }
-                  }
-                  
-            }
-      )
-      
-      output$SampvisPCAplot <- renderScatterD3({
-            if (input$Sampvisplotcolortype=="Cluster") {
-                  tmpclu <- as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum)))
-            } else {
-                  tmpclu <- as.factor(sapply(colnames(Maindata$sumtable),function(i) strsplit(i,input$Sampvisplotsamplesep,fixed=T)[[1]][1]))
-            }
-            drawdata <- data.frame(x=Maindata$allpcares[,as.numeric(input$SampvisPCAxpcid)],y=Maindata$allpcares[,as.numeric(input$SampvisPCAypcid)],Cluster=tmpclu,stringsAsFactors = F)
-            scatterD3(x = drawdata$x, y = drawdata$y, col_lab = "Cluster", col_var = as.numeric(drawdata$Cluster), lab = row.names(Maindata$allpcares), xlab = paste0("PCA",as.numeric(input$SampvisPCAxpcid)), ylab = paste0("PCA",as.numeric(input$SampvisPCAypcid)), transitions = TRUE)   
-      })
-      
-      output$SampvisMDSplot <- renderScatterD3({
-            data <- t(Maindata$sumtable)
-            d <- dist(data)
-            fit <- cmdscale(d,eig=TRUE, k=min(20,ncol(Maindata$sumtable)-1))
-            x <- fit$points[,as.numeric(input$SampvisMDSxdimid)]
-            y <- fit$points[,as.numeric(input$SampvisMDSydimid)]
-            if (input$Sampvisplotcolortype=="Cluster") {
-                  tmpclu <- as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum)))
-            } else {
-                  tmpclu <- as.factor(sapply(colnames(Maindata$sumtable),function(i) strsplit(i,input$Sampvisplotsamplesep,fixed=T)[[1]][1]))
-            }
-            scatterD3(x = x, y = y, col_var = as.numeric(tmpclu), lab = row.names(data), xlab = paste0("Dimension",as.numeric(input$SampvisMDSxdimid)), ylab = paste0("Dimension",as.numeric(input$SampvisMDSydimid)), col_lab = "Cluster", transitions = TRUE)      
-      })
-      
-      output$SampvisFeatplotdim2 <- renderScatterD3({
-            if (length(input$SampvisFeatselectfeat) == 2) {
-                  x <- Maindata$sumtable[input$SampvisFeatselectfeat[1],]
-                  y <- Maindata$sumtable[input$SampvisFeatselectfeat[2],]                  
-                  if (input$Sampvisplotcolortype=="Cluster") {
-                        tmpclu <- as.character(cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum)))
-                  } else {
-                        tmpclu <- as.factor(sapply(colnames(Maindata$sumtable),function(i) strsplit(i,input$Sampvisplotsamplesep,fixed=T)[[1]][1]))
-                  }           
-                  scatterD3(x = x, y = y, col_var = as.numeric(tmpclu), lab = colnames(Maindata$sumtable), xlab = input$SampvisFeatselectfeat[1], ylab = input$SampvisFeatselectfeat[2], col_lab = "Cluster", transitions = TRUE)
-            }            
-      })
-      
-      output$SampvisFeatplotdim1 <- renderPlot({
-            if (length(input$SampvisFeatselectfeat) == 1) {
-                  data <- data.frame(Feature=Maindata$sumtable[input$SampvisFeatselectfeat,],Cluster=paste0("Cluster",cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum))))             
-                  ggplot(data, aes(Cluster, Feature)) + geom_boxplot()      
-            }                        
-      })
-      
-      output$SampvisFeatplotdim3 <- renderPlot({
-            if (length(input$SampvisFeatselectfeat) > 2) {
-                  data <- Maindata$sumtable[input$SampvisFeatselectfeat,]
-                  Cluster=cutree(Maindata$samphclust,k=as.numeric(input$Sampvisclusternum))
-                  annotation_col = data.frame(Cluster = as.factor(Cluster))
-                  rownames(annotation_col) = colnames(data)           
-                  pheatmap(data[,Maindata$samphclust$order], annotation_col = annotation_col[Maindata$samphclust$order,,drop=F],cluster_rows=F,cluster_cols=F)
-            }
-      })
-      
-      output$Sampvisoptionui1 <- renderUI({
-            sliderInput("Sampvisclusternum","Select number of clusters",2,ncol(Maindata$sumtable)-1,2,step = 1)
-      })
-      
       observe({
-            if (input$Sampvisclunumoptbutton > 0) {
+            if (input$Sampclucludiagrun > 0) {
                   isolate({
-                        updateSliderInput(session,"Sampvisclusternum","Select number of clusters",Maindata$optclustnum,2,ncol(Maindata$sumtable)-1,step = 1)
+                        clu <- Maindata$cluster
+                        reducedata <- Maindata$reducedata
+                        cluSS <- sum(sapply(unique(clu),function(i) {
+                              sum(rowSums(sweep(reducedata[clu==i,,drop=F],2,colMeans(reducedata[clu==i,,drop=F]),"-")^2))
+                        }))
+                        Maindata$trueSSper <- 1-cluSS/sum((sweep(reducedata,2,colMeans(reducedata),"-"))^2)
+                        set.seed(12345)
+                        Maindata$simuSSper <- sapply (1:as.numeric(input$Sampclucludiagsimnum), function(d) {
+                              clu <- sample(Maindata$cluster)
+                              cluSS <- sum(sapply(unique(clu),function(i) {
+                                    sum(rowSums(sweep(reducedata[clu==i,,drop=F],2,colMeans(reducedata[clu==i,,drop=F]),"-")^2))
+                              }))
+                              1-cluSS/sum((sweep(reducedata,2,colMeans(reducedata),"-"))^2)      
+                        })
                   })
             }
       })
       
-      output$Sampvisoptionui2 <- renderUI({
-            if (input$Sampvismet=="PCA") {
-                  tagList(
-                        selectInput("SampvisPCAxpcid","PC shown on x-axis",1:min(nrow(Maindata$sumtable),ncol(Maindata$sumtable),20),selected = 1),
-                        selectInput("SampvisPCAypcid","PC shown on y-axis",1:min(nrow(Maindata$sumtable),ncol(Maindata$sumtable),20),selected = 2)
-                  )
-            } else if (input$Sampvismet=="MDS") {
-                  tagList(
-                        selectInput("SampvisMDSxdimid","Dimension shown on x-axis",1:min(20,ncol(Maindata$sumtable)-1),selected = 1),
-                        selectInput("SampvisMDSydimid","Dimension shown on y-axis",1:min(20,ncol(Maindata$sumtable)-1),selected = 2)
-                  )
-            } else if (input$Sampvismet=="Features") {
-                  selectInput("SampvisFeatselectfeat","Select features (Initialization may take time)",row.names(Maindata$sumtable),multiple = T)  
+      output$Sampclucludiagplot <- renderPlot({
+            if (!is.null(Maindata$trueSSper)) {
+                  hist(Maindata$simuSSper,xlim=c(0,Maindata$trueSSper),main="",xlab="Percentage of between cluster variance and total variance")
+                  abline(v=Maindata$trueSSper,col="red",lwd=2)
             }
       })
       
-      output$Sampselectfeattypeui <- renderUI({
-            checkboxGroupInput("Sampselectfeattype","Select Feature Type",unique(Maindata$sumtablenametype),selected=unique(Maindata$sumtablenametype))
+      output$SampclucludiagtrueSS <- renderText({
+            if (!is.null(Maindata$trueSSper)) {
+                  paste("True percentage of between cluster variance and total variance:",Maindata$trueSSper)
+            }
       })
       
+      output$SampclucludiagsimuSS <- renderText({
+            if (!is.null(Maindata$simuSSper)) {
+                  paste("Averaged simulated percentage of between cluster variance and total variance:",mean(Maindata$simuSSper))
+            }
+      })
+      
+      output$Sampcluplotselectfeatui <- renderUI({
+            if (!input$Sampcluplotorifeattf) {
+                  selectInput("Sampcluplotselectfeat","Select plot features",colnames(Maindata$reducedata),multiple=T,selected = colnames(Maindata$reducedata)[1:2])
+            } else {
+                  selectInput("Sampcluplotselectfeat","Select plot features",row.names(Maindata$allsumtable),multiple=T,selected = row.names(Maindata$allsumtable)[1:2])
+            }
+      })
+      
+      output$Sampcluplotdim1 <- renderPlot({
+            if (!is.null(Maindata$cluster) & length(input$Sampcluplotselectfeat)==1) {
+                  if (!input$Sampcluplotorifeattf) {
+                        drawdata <- data.frame(Feature=Maindata$reducedata[,input$Sampcluplotselectfeat],Cluster=paste0("Cluster",Maindata$cluster))
+                  } else {
+                        drawdata <- data.frame(Feature=Maindata$allsumtable[input$Sampcluplotselectfeat,],Cluster=paste0("Cluster",Maindata$cluster))
+                  }
+                  ggplot(drawdata, aes(Cluster, Feature)) + geom_boxplot() + ylab(input$Sampcluplotselectfeat) +
+                        theme(axis.text.x = element_text(size=17,color="black"),
+                              axis.text.y = element_text(size=17,color='black'),
+                              axis.title.x = element_text(size=20,vjust=-1),
+                              axis.title.y = element_text(size=20,vjust=1),
+                              plot.margin = unit(c(1,1,1,1), "cm"),
+                              legend.text = element_text(size=15),
+                              legend.title = element_text(size=15),
+                              legend.position = "right",
+                              legend.key.size=unit(1,"cm")
+                        )
+            }
+      })
+      
+      output$Sampcluplotdim2 <- renderScatterD3({
+            if (!is.null(Maindata$cluster) & length(input$Sampcluplotselectfeat)==2) {
+                  if (!input$Sampcluplotorifeattf) {
+                        drawdata <- data.frame(x=Maindata$reducedata[,input$Sampcluplotselectfeat[1]],y=Maindata$reducedata[,input$Sampcluplotselectfeat[2]],Cluster=Maindata$cluster,stringsAsFactors = F)
+                  } else {
+                        drawdata <- data.frame(x=Maindata$allsumtable[input$Sampcluplotselectfeat[1],],y=Maindata$allsumtable[input$Sampcluplotselectfeat[2],],Cluster=Maindata$cluster,stringsAsFactors = F)
+                  }
+                  if (input$Sampselectfeatincludebulktf && length(input$Sampselectfeatincludebulk) > 0) {
+                        if (input$Sampcluplotshowlabopt=="bulk") {
+                              lab <- row.names(Maindata$reducedata)
+                              lab[!row.names(Maindata$reducedata) %in% input$Sampselectfeatincludebulk] <- ""
+                        } else if (input$Sampcluplotshowlabopt=="all") {
+                              lab <- row.names(Maindata$reducedata)
+                        } else {
+                              lab <- NULL
+                        }
+                  } else {
+                        if (input$Sampcluplotshowlabtf) {
+                              lab <- row.names(Maindata$reducedata)
+                        } else {
+                              lab <- NULL
+                        }
+                  }
+                  scatterD3(x = drawdata$x, y = drawdata$y, tooltip_text = row.names(Maindata$reducedata), col_lab = "Cluster", col_var = as.numeric(drawdata$Cluster), lab = lab, xlab = input$Sampcluplotselectfeat[1], ylab = input$Sampcluplotselectfeat[2], transitions = TRUE)         
+            }
+      })
+      
+      output$Sampcluplotdim3 <- renderPlot({
+            if (!is.null(Maindata$cluster) & length(input$Sampcluplotselectfeat)>2) {
+                  if (!input$Sampcluplotorifeattf) {
+                        data <- Maindata$reducedata[,input$Sampcluplotselectfeat]
+                  } else {
+                        data <- t(Maindata$allsumtable[input$Sampcluplotselectfeat,])
+                  }
+                  anno = data.frame(Cluster = as.factor(Maindata$cluster))
+                  rownames(anno) = row.names(data)           
+                  pheatmap(data, annotation_row = anno,cluster_rows=F,cluster_cols=F)
+            }
+      })
+      
+      output$Sampcluplotdownload <- downloadHandler(
+            filename = function() { 'SampleCluster.pdf' },
+            content = function(file) {                  
+                  if (!is.null(Maindata$cluster)) {
+                        if (length(input$Sampcluplotselectfeat)==1) {
+                              if (!input$Sampcluplotorifeattf) {
+                                    drawdata <- data.frame(Feature=Maindata$reducedata[,input$Sampcluplotselectfeat],Cluster=paste0("Cluster",Maindata$cluster))
+                              } else {
+                                    drawdata <- data.frame(Feature=Maindata$allsumtable[input$Sampcluplotselectfeat,],Cluster=paste0("Cluster",Maindata$cluster))
+                              }
+                              pdf(file,width=12,height=10)
+                              p1 <- ggplot(drawdata, aes(Cluster, Feature)) + geom_boxplot() + ylab(input$Sampcluplotselectfeat) +
+                                    theme(axis.text.x = element_text(size=17,color="black"),
+                                          axis.text.y = element_text(size=17,color='black'),
+                                          axis.title.x = element_text(size=20,vjust=-1),
+                                          axis.title.y = element_text(size=20,vjust=1),
+                                          plot.margin = unit(c(1,1,1,1), "cm"),
+                                          legend.text = element_text(size=15),
+                                          legend.title = element_text(size=15),
+                                          legend.position = "right",
+                                          legend.key.size=unit(1,"cm")
+                                    )
+                              print(p1)
+                              dev.off()      
+                        } else if (length(input$Sampcluplotselectfeat)==2) {
+                              if (!input$Sampcluplotorifeattf) {
+                                    drawdata <- data.frame(x=Maindata$reducedata[,input$Sampcluplotselectfeat[1]],y=Maindata$reducedata[,input$Sampcluplotselectfeat[2]],Cluster=as.character(Maindata$cluster),stringsAsFactors = F)
+                              } else {
+                                    drawdata <- data.frame(x=Maindata$allsumtable[input$Sampcluplotselectfeat[1],],y=Maindata$allsumtable[input$Sampcluplotselectfeat[2],],Cluster=as.character(Maindata$cluster),stringsAsFactors = F)
+                              }
+                              pdf(file,width=12,height=10)
+                              p1 <- ggplot(aes(x = x, y = y, color = Cluster),data=drawdata) + geom_point(size=3) + xlab(input$Sampcluplotselectfeat[1]) + ylab(input$Sampcluplotselectfeat[2]) + 
+                                    theme(axis.text.x = element_text(size=17,color="black"),
+                                          axis.text.y = element_text(size=17,color='black'),
+                                          axis.title.x = element_text(size=20,vjust=-1),
+                                          axis.title.y = element_text(size=20,vjust=1),
+                                          plot.margin = unit(c(1,1,1,1), "cm"),
+                                          legend.text = element_text(size=15),
+                                          legend.title = element_text(size=15),
+                                          legend.position = "right",
+                                          legend.key.size=unit(1,"cm")
+                                    )
+                              print(p1)
+                              dev.off()
+                        } else {
+                              if (!input$Sampcluplotorifeattf) {
+                                    data <- Maindata$reducedata[,input$Sampcluplotselectfeat]
+                              } else {
+                                    data <- t(Maindata$allsumtable[input$Sampcluplotselectfeat,])
+                              }
+                              anno = data.frame(Cluster = as.factor(Maindata$cluster))
+                              rownames(anno) = row.names(data)           
+                              pheatmap(data, annotation_row = anno,cluster_rows=F,cluster_cols=F,filename=file,width=10,height=40)
+                        }
+                  }
+            }
+      )
+      
+      output$Sampclutabledownload <- downloadHandler(
+            filename = function() { "SampleCluster.txt" },
+            content = function(file) {       
+                  tmp <- data.frame(Cell=colnames(Maindata$sumtable),Cluster=Maindata$cluster)
+                  write.table(tmp,file,row.names=F,quote=F,sep="\t")     
+            }
+      )
+      
+      #Bulk correlation
+      
       observe({
-            if (input$Sampbulkrunbutton > 0) {
+            if (input$Sampbulkcorrunbutton > 0) {
                   isolate({
                         withProgress(message = 'Calculating correlation',{
                               ENCODEcounttable <- NULL
@@ -791,7 +782,7 @@ shinyServer(function(input, output,session) {
                                     sapply(1:ncol(ENCODEcounttable), function(ENCODEcounttableid) {
                                           cor(sumtable[,sumtableid],ENCODEcounttable[,ENCODEcounttableid])
                                     })
-                              })) 
+                              }))
                               row.names(corres) <- colnames(sumtable)
                               colnames(corres) <- colnames(ENCODEcounttable)
                               Maindata$bulkcorres <- corres
@@ -850,82 +841,61 @@ shinyServer(function(input, output,session) {
       
       ### Feature-level Analysis ###
       
+      output$Featselectclusterui <- renderUI({
+            if (!is.null(Maindata$cluster)) {
+                  selectInput("Featselectcluster","Select clusters where ANOVA will be performed (at least two should be selected)",unique(Maindata$cluster),selected = sort(unique(Maindata$cluster))[1:2],multiple = T)
+            }
+      })
+      
       observe({
             if (input$Featrunbutton > 0) {
                   isolate({
-                        withProgress(message = 'Identifying feature statistics',{
-                              data <- Maindata$allsumtable
-                              cluidlist <- as.numeric(input$Keyclunum[1]):as.numeric(input$Keyclunum[2])                              
-                              FDR <- Fstat <- matrix(0,nrow=nrow(data),ncol=length(cluidlist))                              
-                              for (cluid in 1:length(cluidlist)) {
-                                    clu <- cutree(Maindata$samphclust,k=cluidlist[cluid])
-                                    totalSS <- rowSums((sweep(data,1,rowMeans(data),"-"))^2)
-                                    cluSS <- sapply(unique(clu),function(i) {
-                                          rowSums((sweep(data[,clu==i,drop=F],1,rowMeans(data[,clu==i,drop=F]),"-"))^2)
-                                    })
-                                    Fstat[,cluid] <- ((totalSS-rowSums(cluSS))/(length(unique(clu)) - 1 ))/(rowSums(cluSS)/(ncol(data) - length(unique(clu))))                                    
-                                    FDR[,cluid] <- p.adjust(pf(Fstat[,cluid],(length(unique(clu)) - 1 ),(ncol(data) - length(unique(clu))),lower.tail = F),method="fdr")
+                        withProgress(message = 'Performing ANOVA',{
+                              clu <- Maindata$cluster
+                              if (input$Featrunallclustertf) {
+                                    data <- Maindata$allsumtable      
+                              } else {
+                                    data <- Maindata$allsumtable[,clu %in% as.numeric(input$Featselectcluster)]
+                                    clu <- clu[clu %in% as.numeric(input$Featselectcluster)]
                               }
+                              totalSS <- rowSums((sweep(data,1,rowMeans(data),"-"))^2)
+                              cluSS <- sapply(unique(clu),function(i) {
+                                    rowSums((sweep(data[,clu==i,drop=F],1,rowMeans(data[,clu==i,drop=F]),"-"))^2)
+                              })
+                              Fstat <- ((totalSS-rowSums(cluSS))/(length(unique(clu)) - 1 ))/(rowSums(cluSS)/(ncol(data) - length(unique(clu))))          
+                              FDR <- p.adjust(pf(Fstat,(length(unique(clu)) - 1 ),(ncol(data) - length(unique(clu))),lower.tail = F),method="fdr")
                         })  
-                        row.names(Fstat) <- row.names(data)
-                        row.names(FDR) <- row.names(data)
-                        colnames(Fstat) <- paste0("Cluster_",cluidlist)
-                        colnames(FDR) <- paste0("Cluster_",cluidlist)
-                        Maindata$FeatFstat <- Fstat
-                        Maindata$FeatFDR <- FDR
+                        Maindata$Featres <- cbind(Fstat,FDR)
                   })
             }
       })
       
-      output$Featsampclunumui <- renderUI({
-            if (!is.null(Maindata$sumtable))
-                  sliderInput("Keyclunum","",2,ncol(Maindata$sumtable)-1,c(2,ncol(Maindata$sumtable)-1),step=1)
-      })
-      
       output$Featrestable <- DT::renderDataTable({
-            if (input$Featviewtab == "Fstat") {
-                  tmp <- data.frame(Maindata$FeatFstat)      
-            } else {
-                  tmp <- data.frame(Maindata$FeatFDR)
-            }
-            tmp <- cbind(row.names(tmp),tmp)
-            colnames(tmp)[1] <- "Feature"
-            tmp[,1] <- as.character(tmp[,1])
+            tmp <- data.frame(Feature=row.names(Maindata$Featres),Fstatistics=Maindata$Featres[,1],FDR=Maindata$Featres[,2],stringsAsFactors = F)
             DT::datatable(tmp,filter="top",rownames = F, options = list(columnDefs = list(list(className="dt-body-left","targets"="_all"))))
       })
       
       output$Featdownloadbutton <- downloadHandler(
             filename = function() { "KeyFeatures.txt" },
             content = function(file) {                  
-                  if (input$Featviewtab == "Fstat") {
-                        tmp <- data.frame(Maindata$FeatFstat)      
-                  } else {
-                        tmp <- data.frame(Maindata$FeatFDR)
-                  }
-                  tmp <- cbind(row.names(tmp),tmp)
-                  colnames(tmp)[1] <- "Feature"
+                  tmp <- data.frame(Feature=row.names(Maindata$Featres),Fstatistics=Maindata$Featres[,1],FDR=Maindata$Featres[,2],stringsAsFactors = F)
                   write.table(tmp,file,row.names=F,quote=F,sep="\t")     
             }
       )
-      
-      output$FeatSumselectcolnameui <- renderUI({
-            if (!is.null(Maindata$FeatFstat)) {
-                  selectInput("FeatSumselectcolname","Select Number of Clusters",colnames(Maindata$FeatFstat))
-            }
-      })
+
       
       output$FeatSumtext <- renderText({
-            if (!is.null(Maindata$FeatFstat)) {
-                  paste("There are ",sum(Maindata$FeatFDR[,input$FeatSumselectcolname] < 0.05),"significant features, which is",round(mean(Maindata$FeatFDR[,input$FeatSumselectcolname] < 0.05),digits=4),"percent of all features")
+            if (!is.null(Maindata$Featres)) {
+                  paste("There are ",sum(Maindata$Featres[,2] < 0.05),"significant features, which is",round(mean(Maindata$Featres[,2] < 0.05),digits=4),"percent of all features")
             }
       })
       
       output$FeatSumplot <- renderPlot({
-            if (!is.null(Maindata$FeatFstat)) {
-                  if (input$Featviewtab == "Fstat") {
-                        hist(Maindata$FeatFstat[,input$FeatSumselectcolname],main="Histogram for F statistics",xlab="F statistics",ylab="Frequency")
+            if (!is.null(Maindata$Featres)) {
+                  if (input$Featviewtab == "Fstatistics") {
+                        hist(Maindata$Featres[,1],main="Histogram for F statistics",xlab="F statistics",ylab="Frequency")
                   } else {
-                        hist(Maindata$FeatFDR[,input$FeatSumselectcolname],main="Histogram for FDR",xlab="FDR",ylab="Frequency")
+                        hist(Maindata$Featres[,2],main="Histogram for FDR",xlab="FDR",ylab="Frequency")
                   }
                   
             }
