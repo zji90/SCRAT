@@ -841,6 +841,10 @@ shinyServer(function(input, output,session) {
       
       ### Feature-level Analysis ###
       
+      output$Featselectfeattypeui <- renderUI({
+            checkboxGroupInput("Featselectfeattype","Select Feature Type",unique(Maindata$sumtablenametype),selected=unique(Maindata$sumtablenametype))
+      })
+      
       output$Featselectclusterui <- renderUI({
             if (!is.null(Maindata$cluster)) {
                   selectInput("Featselectcluster","Select clusters where ANOVA will be performed (at least two should be selected)",unique(Maindata$cluster),selected = sort(unique(Maindata$cluster))[1:2],multiple = T)
@@ -852,10 +856,14 @@ shinyServer(function(input, output,session) {
                   isolate({
                         withProgress(message = 'Performing ANOVA',{
                               clu <- Maindata$cluster
+                              tmp <- Maindata$allsumtable[Maindata$sumtablenametype %in% input$Featselectfeattype,,drop=F]
+                              if (nrow(tmp)==0) {
+                                    tmp <- Maindata$allsumtable
+                              }
                               if (input$Featrunallclustertf) {
-                                    data <- Maindata$allsumtable      
+                                    data <- tmp
                               } else {
-                                    data <- Maindata$allsumtable[,clu %in% as.numeric(input$Featselectcluster)]
+                                    data <- tmp[,clu %in% as.numeric(input$Featselectcluster)]
                                     clu <- clu[clu %in% as.numeric(input$Featselectcluster)]
                               }
                               totalSS <- rowSums((sweep(data,1,rowMeans(data),"-"))^2)

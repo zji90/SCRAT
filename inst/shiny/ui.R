@@ -164,7 +164,7 @@ shinyUI(
                                 wellPanel(
                                       conditionalPanel(condition="input.Sampmainmet=='Clustering'",
                                                        checkboxInput("Sampcludimredscale","Scale all features of each cell before dimension reduction and clustering (zero mean and unit variance).",value=T),
-                                                       radioButtons("Sampcludimredmet","Dimension reduction method",list("t-SNE"="tSNE","PCA"="PCA","No Reduction"="None")),
+                                                       radioButtons("Sampcludimredmet","Dimension reduction method",list("PCA"="PCA","t-SNE"="tSNE","No Reduction"="None")),
                                                        conditionalPanel(condition="input.Sampcludimredmet=='tSNE'",helpText("Note that t-SNE could take some time to run.")),
                                                        conditionalPanel(condition="input.Sampcludimredmet=='PCA'",
                                                                         checkboxInput("Sampcluoptdimnum","Automatically choose optimal number of dimensions",value=T)
@@ -248,6 +248,9 @@ shinyUI(
                           sidebarPanel(
                                 fluidRow(actionButton("Featpreviousstepbutton","Previous Step"),align="center"),
                                 helpText("Perform ANOVA tests to identify key features that mostly explains the between cluster variance. The sample clusters are obtained in step 3."),
+                                wellPanel(uiOutput("Featselectfeattypeui"),
+                                          helpText("Select feature type to be included in the sample-level analysis. If no feature type is selected, all feature types will be used in the analsysis.")
+                                ),    
                                 wellPanel(
                                       checkboxInput("Featrunallclustertf","Perform ANOVA for all clusters",value=T),
                                       conditionalPanel(condition="input.Featrunallclustertf==0",uiOutput("Featselectclusterui")),

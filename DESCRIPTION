@@ -19,7 +19,9 @@ Imports:
     scatterD3,
     d3heatmap,
     DT,
-    gplots
+    gplots,
+    mclust,
+    tsne
 VignetteBuilder: knitr
 Suggests:
     knitr,
