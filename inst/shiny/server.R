@@ -182,37 +182,12 @@ shinyServer(function(input, output,session) {
                                           }
                                           if (input$Sumfiltertf) {
                                                 tmp <- tmp[rowMeans(tmp < as.numeric(input$Sumfilterreads)) < as.numeric(input$Sumfilterpercen)/100,,drop=F]
+                                                cv <- apply(tmp,1,function(i) sd(i)/mean(i))
+                                                tmp <- tmp[cv >= as.numeric(input$Sumfiltercv),,drop=F]
                                           }
                                           allres <- rbind(allres,tmp)
                                     })
                               }
-                              #                               if ("ENLO" %in% input$Sumselectmet) {
-                              #                                     withProgress(message = 'Counting Overlaps for ENCODE Loci',{
-                              #                                           load(paste0(datapath,"/gr/ENLO.rda"))
-                              #                                           if (input$SumENLOreducetf) {
-                              #                                                 gr <- reduce(gr)
-                              #                                                 names(gr) <- paste0("ENLO:",seqnames(gr),":",start(gr),"-",end(gr))
-                              #                                           }                                                
-                              #                                           splitgrnum <- round(length(Maindata$bamfile)/10)
-                              #                                           splitgrlength <- round(length(gr)/splitgrnum)
-                              #                                           for (splitid in 1:splitgrnum) {
-                              #                                                 if (splitid == splitgrnum) {
-                              #                                                       splitgr <- gr[((splitid-1)*splitgrlength+1):length(gr)]
-                              #                                                 } else {
-                              #                                                       splitgr <- gr[((splitid-1)*splitgrlength+1):(splitid*splitgrlength)]
-                              #                                                 }
-                              #                                                 tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(splitgr,i))
-                              #                                                 tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
-                              #                                                 if (input$Sumlogtf) {
-                              #                                                       tmp <- log2(tmp + 1)
-                              #                                                 }
-                              #                                                 if (input$Sumfiltertf) {
-                              #                                                       tmp <- tmp[rowMeans(tmp < as.numeric(input$Sumfilterreads)) < as.numeric(input$Sumfilterpercen)/100,,drop=F]       
-                              #                                                 }                        
-                              #                                                 allres <- rbind(allres,tmp)      
-                              #                                           }                                                
-                              #                                     })
-                              #                               }
                               if ("ENCL" %in% input$Sumselectmet) {
                                     withProgress(message = 'Counting Overlaps for ENCODE Cluster',{
                                           load(paste0(datapath,"/gr/ENCL",input$SumENCLclunum,".rda"))
@@ -223,6 +198,8 @@ shinyServer(function(input, output,session) {
                                           }
                                           if (input$Sumfiltertf) {
                                                 tmp <- tmp[rowMeans(tmp < as.numeric(input$Sumfilterreads)) < as.numeric(input$Sumfilterpercen)/100,,drop=F]       
+                                                cv <- apply(tmp,1,function(i) sd(i)/mean(i))
+                                                tmp <- tmp[cv >= as.numeric(input$Sumfiltercv),,drop=F]
                                           }                        
                                           allres <- rbind(allres,tmp)
                                     })
@@ -239,6 +216,8 @@ shinyServer(function(input, output,session) {
                                                 }
                                                 if (input$Sumfiltertf) {
                                                       tmp <- tmp[rowMeans(tmp < as.numeric(input$Sumfilterreads)) < as.numeric(input$Sumfilterpercen)/100,,drop=F]       
+                                                      cv <- apply(tmp,1,function(i) sd(i)/mean(i))
+                                                      tmp <- tmp[cv >= as.numeric(input$Sumfiltercv),,drop=F]
                                                 }                        
                                                 allres <- rbind(allres,tmp)
                                                 load(paste0(datapath,"/gr/transfac2.rda"))
@@ -250,6 +229,8 @@ shinyServer(function(input, output,session) {
                                                 }
                                                 if (input$Sumfiltertf) {
                                                       tmp <- tmp[rowMeans(tmp < as.numeric(input$Sumfilterreads)) < as.numeric(input$Sumfilterpercen)/100,,drop=F]       
+                                                      cv <- apply(tmp,1,function(i) sd(i)/mean(i))
+                                                      tmp <- tmp[cv >= as.numeric(input$Sumfiltercv),,drop=F]
                                                 }                        
                                                 allres <- rbind(allres,tmp)
                                                 if (input$InputGenome %in% c("hg19","hg38")) {
@@ -262,6 +243,8 @@ shinyServer(function(input, output,session) {
                                                       }
                                                       if (input$Sumfiltertf) {
                                                             tmp <- tmp[rowMeans(tmp < as.numeric(input$Sumfilterreads)) < as.numeric(input$Sumfilterpercen)/100,,drop=F]       
+                                                            cv <- apply(tmp,1,function(i) sd(i)/mean(i))
+                                                            tmp <- tmp[cv >= as.numeric(input$Sumfiltercv),,drop=F]
                                                       }                        
                                                       allres <- rbind(allres,tmp)
                                                 }
@@ -278,6 +261,8 @@ shinyServer(function(input, output,session) {
                                                 }
                                                 if (input$Sumfiltertf) {
                                                       tmp <- tmp[rowMeans(tmp < as.numeric(input$Sumfilterreads)) < as.numeric(input$Sumfilterpercen)/100,,drop=F]       
+                                                      cv <- apply(tmp,1,function(i) sd(i)/mean(i))
+                                                      tmp <- tmp[cv >= as.numeric(input$Sumfiltercv),,drop=F]
                                                 }                        
                                                 allres <- rbind(allres,tmp)
                                                 load(paste0(datapath,"/gr/jaspar2.rda"))
@@ -289,6 +274,8 @@ shinyServer(function(input, output,session) {
                                                 }
                                                 if (input$Sumfiltertf) {
                                                       tmp <- tmp[rowMeans(tmp < as.numeric(input$Sumfilterreads)) < as.numeric(input$Sumfilterpercen)/100,,drop=F]       
+                                                      cv <- apply(tmp,1,function(i) sd(i)/mean(i))
+                                                      tmp <- tmp[cv >= as.numeric(input$Sumfiltercv),,drop=F]
                                                 }                        
                                                 allres <- rbind(allres,tmp)
                                           })
@@ -306,6 +293,8 @@ shinyServer(function(input, output,session) {
                                                 }
                                                 if (input$Sumfiltertf) {
                                                       tmp <- tmp[rowMeans(tmp < as.numeric(input$Sumfilterreads)) < as.numeric(input$Sumfilterpercen)/100,,drop=F]       
+                                                      cv <- apply(tmp,1,function(i) sd(i)/mean(i))
+                                                      tmp <- tmp[cv >= as.numeric(input$Sumfiltercv),,drop=F]
                                                 }                        
                                                 allres <- rbind(allres,tmp)
                                           }
@@ -320,6 +309,8 @@ shinyServer(function(input, output,session) {
                                           }
                                           if (input$Sumfiltertf) {
                                                 tmp <- tmp[rowMeans(tmp < as.numeric(input$Sumfilterreads)) < as.numeric(input$Sumfilterpercen)/100,,drop=F]       
+                                                cv <- apply(tmp,1,function(i) sd(i)/mean(i))
+                                                tmp <- tmp[cv >= as.numeric(input$Sumfiltercv),,drop=F]
                                           }                        
                                           allres <- rbind(allres,tmp)
                                     })
@@ -490,8 +481,13 @@ shinyServer(function(input, output,session) {
                                     if (input$Sampcludimredmet=='PCA') {                              
                                           pcares <- prcomp(t(sumtable),scale. = T)
                                           if (input$Sampcluoptdimnum) {
-                                                var <- (pcares$sdev)^2
-                                                pcadim <- max(2,which.max(which(var/sum(var) > 0.05)))
+                                                tmp <- pcares$sdev
+                                                sdev <- tmp[1:min(20,length(tmp))]
+                                                x <- 1:length(sdev)
+                                                pcadim <- which.min(sapply(x, function(i) {
+                                                      x2 <- pmax(0,x-i)
+                                                      sum(lm(sdev~x+x2)$residuals^2)
+                                                }))
                                           } else {
                                                 pcadim <- as.numeric(input$Sampcluchoosedimnum)
                                           }
@@ -511,7 +507,7 @@ shinyServer(function(input, output,session) {
                                     }
                                     if (input$Sampcluclumet=="kmeans") {
                                           if (input$Sampcluoptclunum) {
-                                                x <- 2:min(20,ncol(Maindata$sumtable)-1)
+                                                x <- 2:min(20,ncol(Maindata$sumtable))
                                                 reducedata <- Maindata$reducedata
                                                 y <- sapply(x, function(k) {
                                                       set.seed(12345)
@@ -521,7 +517,12 @@ shinyServer(function(input, output,session) {
                                                       }))
                                                       1-cluSS/sum((sweep(reducedata,2,colMeans(reducedata),"-"))^2)
                                                 })      
-                                                clunum <- x[which.max(y > 0.7)]
+                                                y <- c(0,y)
+                                                x <- c(1,x)
+                                                clunum <- which.min(sapply(x, function(i) {
+                                                      x2 <- pmax(0,x-i)
+                                                      sum(lm(y~x+x2)$residuals^2)
+                                                }))
                                           } else {
                                                 clunum <- as.numeric(input$Sampcluchooseclunum)
                                           }
@@ -530,7 +531,7 @@ shinyServer(function(input, output,session) {
                                     } else if (input$Sampcluclumet=="hclust") {
                                           datahclust <- hclust(dist(Maindata$reducedata))
                                           if (input$Sampcluoptclunum) {
-                                                x <- 2:min(20,ncol(Maindata$sumtable)-1)
+                                                x <- 2:min(20,ncol(Maindata$sumtable))
                                                 reducedata <- Maindata$reducedata
                                                 y <- sapply(x, function(k) {
                                                       clu <- cutree(datahclust,k)
@@ -539,7 +540,12 @@ shinyServer(function(input, output,session) {
                                                       }))
                                                       1-cluSS/sum((sweep(reducedata,2,colMeans(reducedata),"-"))^2)
                                                 })      
-                                                clunum <- x[which.max(y > 0.7)]
+                                                y <- c(0,y)
+                                                x <- c(1,x)
+                                                clunum <- which.min(sapply(x, function(i) {
+                                                      x2 <- pmax(0,x-i)
+                                                      sum(lm(y~x+x2)$residuals^2)
+                                                }))
                                           } else {
                                                 clunum <- as.numeric(input$Sampcluchooseclunum)
                                           }
@@ -890,7 +896,7 @@ shinyServer(function(input, output,session) {
                   write.table(tmp,file,row.names=F,quote=F,sep="\t")     
             }
       )
-
+      
       
       output$FeatSumtext <- renderText({
             if (!is.null(Maindata$Featres)) {

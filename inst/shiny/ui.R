@@ -72,11 +72,12 @@ shinyUI(
                                                        checkboxGroupInput("Sumselectmet","Choose Summarizing Method",list("TSS Upstream"="TSS","ENCODE Cluster"="ENCL","Motif Sites"="MOTIF","GSEA Gene Sets"="GSEA","Upload BED"="Upload"),selected="TSS"),
                                                        hr(),
                                                        checkboxInput("Sumlogtf","Log2 transformation",value=T),
-                                                       checkboxInput("Sumaddcv","Add coefficient of variation information",value=T),
+                                                       checkboxInput("Sumaddcv","Add coefficient of variation (sd/mean) information",value=T),
                                                        checkboxInput("Sumfiltertf","Filter Features",value=T),
                                                        conditionalPanel(condition="input.Sumfiltertf==1",
                                                                         textInput("Sumfilterpercen","Exclude features having more than","90"),
-                                                                        textInput("Sumfilterreads","percent of samples whose (normalized) reads are less than","0.01")
+                                                                        textInput("Sumfilterreads","percent of samples whose (normalized) reads are less than","0.01"),
+                                                                        textInput("Sumfiltercv","Exclude features with coefficient of variance (sd/mean) less than","0.01")
                                                        ),
                                                        hr(),
                                                        actionButton("Sumrunbutton","Run Summarization")
@@ -94,7 +95,7 @@ shinyUI(
                                                        #                                       ),
                                                        conditionalPanel(condition="input.Sumdetailchoose=='ENCL'",
                                                                         helpText('Clusters of genomic regions (1000,2000 or 5000 clusters) were precompiled based on ENCODE DNase-seq data. For each cluster, sum all reads overlapping any of its genomic regions. For cluster id 1, the feature name will be ENCL1000:Cluster1'),
-                                                                        radioButtons("SumENCLclunum","Choose number of clusters",c("1000","2000","5000"))
+                                                                        radioButtons("SumENCLclunum","Choose number of clusters",c("1000","2000","5000"),"2000")
                                                        ),
                                                        conditionalPanel(condition="input.Sumdetailchoose=='MOTIF'",
                                                                         helpText('Motif sites were mapped to whole genome and filtered for potential TFBS using ENCODE DNase-seq data. For each motif, sum all reads overlapping any of its binding site. For Motif MA0040.1_Foxq1, the feature name will be MOTIF:MA0040.1_Foxq1'),
