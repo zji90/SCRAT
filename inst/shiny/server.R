@@ -171,28 +171,28 @@ shinyServer(function(input, output,session) {
                         if (length(input$Sumselectmet) > 0) {
                               allres <- NULL
                               datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
-                              if ("TSS" %in% input$Sumselectmet) {
-                                    withProgress(message = 'Counting Overlaps for TSS',{
-                                          load(paste0(datapath,"/gr/generegion.rda"))
-                                          gr <- promoters(resize(gr,1),as.numeric(input$SumTSSupregionbp),as.numeric(input$SumTSSdownregionbp))
-                                          tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
-                                          tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
-                                          if (input$Sumlogtf) {
-                                                tmp <- log2(tmp + 1)
-                                          }
-                                          if (input$Sumfiltertf) {
-                                                tmp <- tmp[rowMeans(tmp < as.numeric(input$Sumfilterreads)) < as.numeric(input$Sumfilterpercen)/100,,drop=F]
-                                                cv <- apply(tmp,1,function(i) sd(i)/mean(i))
-                                                tmp <- tmp[cv >= as.numeric(input$Sumfiltercv),,drop=F]
-                                          }
-                                          allres <- rbind(allres,tmp)
-                                    })
-                              }
+                              # if ("TSS" %in% input$Sumselectmet) {
+                              #       withProgress(message = 'Counting Overlaps for TSS',{
+                              #             load(paste0(datapath,"/gr/generegion.rda"))
+                              #             gr <- promoters(resize(gr,1),as.numeric(input$SumTSSupregionbp),as.numeric(input$SumTSSdownregionbp))
+                              #             tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
+                              #             tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * 10000
+                              #             if (input$Sumlogtf) {
+                              #                   tmp <- log2(tmp + 1)
+                              #             }
+                              #             if (input$Sumfiltertf) {
+                              #                   tmp <- tmp[rowMeans(tmp < as.numeric(input$Sumfilterreads)) < as.numeric(input$Sumfilterpercen)/100,,drop=F]
+                              #                   cv <- apply(tmp,1,function(i) sd(i)/mean(i))
+                              #                   tmp <- tmp[cv >= as.numeric(input$Sumfiltercv),,drop=F]
+                              #             }
+                              #             allres <- rbind(allres,tmp)
+                              #       })
+                              # }
                               if ("ENCL" %in% input$Sumselectmet) {
                                     withProgress(message = 'Counting Overlaps for ENCODE Cluster',{
                                           load(paste0(datapath,"/gr/ENCL",input$SumENCLclunum,".rda"))
                                           tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
-                                          tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
+                                          tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * 10000
                                           if (input$Sumlogtf) {
                                                 tmp <- log2(tmp + 1)
                                           }
@@ -210,7 +210,7 @@ shinyServer(function(input, output,session) {
                                                 load(paste0(datapath,"/gr/transfac1.rda"))
                                                 gr <- flank(gr,as.numeric(input$SumMOTIFflank),both = T)
                                                 tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
-                                                tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
+                                                tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * 10000
                                                 if (input$Sumlogtf) {
                                                       tmp <- log2(tmp + 1)
                                                 }
@@ -223,7 +223,7 @@ shinyServer(function(input, output,session) {
                                                 load(paste0(datapath,"/gr/transfac2.rda"))
                                                 gr <- flank(gr,as.numeric(input$SumMOTIFflank),both = T)
                                                 tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
-                                                tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
+                                                tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * 10000
                                                 if (input$Sumlogtf) {
                                                       tmp <- log2(tmp + 1)
                                                 }
@@ -237,7 +237,7 @@ shinyServer(function(input, output,session) {
                                                       load(paste0(datapath,"/gr/transfac3.rda"))
                                                       gr <- flank(gr,as.numeric(input$SumMOTIFflank),both = T)
                                                       tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
-                                                      tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
+                                                      tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * 10000
                                                       if (input$Sumlogtf) {
                                                             tmp <- log2(tmp + 1)
                                                       }
@@ -255,7 +255,7 @@ shinyServer(function(input, output,session) {
                                                 load(paste0(datapath,"/gr/jaspar1.rda"))
                                                 gr <- flank(gr,as.numeric(input$SumMOTIFflank),both = T)
                                                 tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
-                                                tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
+                                                tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * 10000
                                                 if (input$Sumlogtf) {
                                                       tmp <- log2(tmp + 1)
                                                 }
@@ -268,7 +268,7 @@ shinyServer(function(input, output,session) {
                                                 load(paste0(datapath,"/gr/jaspar2.rda"))
                                                 gr <- flank(gr,as.numeric(input$SumMOTIFflank),both = T)
                                                 tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
-                                                tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
+                                                tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * 10000
                                                 if (input$Sumlogtf) {
                                                       tmp <- log2(tmp + 1)
                                                 }
@@ -287,7 +287,7 @@ shinyServer(function(input, output,session) {
                                                 load(paste0(datapath,"/gr/GSEA",i,".rda"))
                                                 gr <- promoters(resize(gr,1),as.numeric(input$SumGSEAupregionbp),as.numeric(input$SumGSEAdownregionbp))             
                                                 tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
-                                                tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
+                                                tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * 10000
                                                 if (input$Sumlogtf) {
                                                       tmp <- log2(tmp + 1)
                                                 }
@@ -303,7 +303,7 @@ shinyServer(function(input, output,session) {
                               if ("Upload" %in% input$Sumselectmet & !is.null(Maindata$uploadgr)) {
                                     withProgress(message = 'Counting Overlaps for Upload bed',{
                                           tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(Maindata$uploadgr,i))
-                                          tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * median(Maindata$bamsummary[,2])
+                                          tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * 10000
                                           if (input$Sumlogtf) {
                                                 tmp <- log2(tmp + 1)
                                           }
@@ -315,7 +315,7 @@ shinyServer(function(input, output,session) {
                                           allres <- rbind(allres,tmp)
                                     })
                               }
-                              Maindata$allsumtable <- allres                              
+                              Maindata$allsumtable <- allres
                               Maindata$sumtablenametype <- sapply(row.names(allres),function(i) strsplit(i,":")[[1]][1])
                         }
                   })
@@ -401,14 +401,15 @@ shinyServer(function(input, output,session) {
                   if (nrow(tmp)==0) {
                         tmp <- Maindata$allsumtable
                   } 
+                  Maindata$sumtable <- tmp
                   if (input$Sampselectfeatincludebulktf & length(input$Sampselectfeatincludebulk) > 0) {
                         ENCODEcounttable <- NULL
                         datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
                         cortype <- input$Sampselectfeattype
-                        if ("TSS" %in% cortype) {
-                              load(paste0(datapath,"/ENCODE/generegion.rda"))
-                              ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),input$Sampselectfeatincludebulk,drop=F])
-                        }
+                        # if ("TSS" %in% cortype) {
+                        #       load(paste0(datapath,"/ENCODE/generegion.rda"))
+                        #       ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),input$Sampselectfeatincludebulk,drop=F])
+                        # }
                         if (sum(grepl("ENCL",cortype))==1) {
                               load(paste0(datapath,"/ENCODE/",cortype[grep("ENCL",cortype)],".rda"))
                               ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),input$Sampselectfeatincludebulk,drop=F])
@@ -424,9 +425,14 @@ shinyServer(function(input, output,session) {
                         if (input$Sumlogtf) {
                               ENCODEcounttable <- log2(ENCODEcounttable + 1)
                         }
-                        Maindata$sumtable <- cbind(tmp,ENCODEcounttable[row.names(tmp),,drop=F])
-                  } else {
-                        Maindata$sumtable <- tmp
+                        Maindata$ENCODEcounttable <- ENCODEcounttable[row.names(tmp),,drop=F]
+                        if (input$Sampcludimredscale) {
+                              tmptable <- apply(Maindata$ENCODEcounttable,2,scale)
+                              dimnames(tmptable) <- dimnames(Maindata$ENCODEcounttable)
+                        }
+                        tmp <- predict(Maindata$pcares,t(tmptable))[,1:Maindata$pcadim,drop=F]
+                        colnames(tmp) <- paste0("PCA",1:ncol(tmp))
+                        Maindata$ENCODEreducedata <- tmp
                   }
             }
       })
@@ -456,14 +462,8 @@ shinyServer(function(input, output,session) {
       
       output$Sampcluplotdim2optionui <- renderUI({
             if (!is.null(input$Sampcluplotselectfeat) && (length(input$Sampcluplotselectfeat)==2)) {
-                  if (input$Sampselectfeatincludebulktf && length(input$Sampselectfeatincludebulk) > 0) {
-                        tagList(radioButtons("Sampcluplotshowlabopt","",list("Show labels of all samples"="all","Show labels of bulk samples"="bulk","No label"="no")),
-                                helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details"))      
-                  } else {
-                        tagList(checkboxInput("Sampcluplotshowlabtf","Show label",value=T),
-                                helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details"))      
-                  }
-                  
+                  tagList(checkboxInput("Sampcluplotshowlabtf","Show label",value=T),
+                          helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details"))      
             }
       })
       
@@ -494,8 +494,8 @@ shinyServer(function(input, output,session) {
                                           tmp <- pcares$x[,1:pcadim]
                                           colnames(tmp) <- paste0("PCA",1:ncol(tmp))
                                           Maindata$reducedata <- tmp
-                                    } else if (input$Sampcludimredmet=='MDS') {
-                                          Maindata$reducedata <- cmdscale(dist(t(sumtable)),k=as.numeric(input$Sampcluchoosedimnum))
+                                          Maindata$pcares <- pcares
+                                          Maindata$pcadim <- pcadim
                                     } else if (input$Sampcludimredmet=='tSNE') {
                                           set.seed(12345)
                                           tmp <- tsne(dist(t(sumtable)),k=as.numeric(input$Sampcluchoosedimnum))
@@ -640,27 +640,26 @@ shinyServer(function(input, output,session) {
       output$Sampcluplotdim2 <- renderScatterD3({
             if (!is.null(Maindata$cluster) & length(input$Sampcluplotselectfeat)==2) {
                   if (!input$Sampcluplotorifeattf) {
-                        drawdata <- data.frame(x=Maindata$reducedata[,input$Sampcluplotselectfeat[1]],y=Maindata$reducedata[,input$Sampcluplotselectfeat[2]],Cluster=Maindata$cluster,stringsAsFactors = F)
-                  } else {
-                        drawdata <- data.frame(x=Maindata$allsumtable[input$Sampcluplotselectfeat[1],],y=Maindata$allsumtable[input$Sampcluplotselectfeat[2],],Cluster=Maindata$cluster,stringsAsFactors = F)
-                  }
-                  if (input$Sampselectfeatincludebulktf && length(input$Sampselectfeatincludebulk) > 0) {
-                        if (input$Sampcluplotshowlabopt=="bulk") {
-                              lab <- row.names(Maindata$reducedata)
-                              lab[!row.names(Maindata$reducedata) %in% input$Sampselectfeatincludebulk] <- ""
-                        } else if (input$Sampcluplotshowlabopt=="all") {
-                              lab <- row.names(Maindata$reducedata)
+                        if (input$Sampselectfeatincludebulktf && length(input$Sampselectfeatincludebulk) > 0) {
+                              drawdata <- data.frame(x=c(Maindata$reducedata[,input$Sampcluplotselectfeat[1]],Maindata$ENCODEreducedata[,input$Sampcluplotselectfeat[1]]),y=c(Maindata$reducedata[,input$Sampcluplotselectfeat[2]],Maindata$ENCODEreducedata[,input$Sampcluplotselectfeat[2]]),Cluster=c(Maindata$cluster,rep("Bulk",nrow(Maindata$ENCODEreducedata))),stringsAsFactors = F)
+                              lab <- c(row.names(Maindata$reducedata),row.names(Maindata$ENCODEreducedata))      
                         } else {
-                              lab <- NULL
+                              drawdata <- data.frame(x=Maindata$reducedata[,input$Sampcluplotselectfeat[1]],y=Maindata$reducedata[,input$Sampcluplotselectfeat[2]],Cluster=Maindata$cluster,stringsAsFactors = F)
+                              lab <- row.names(Maindata$reducedata)
                         }
                   } else {
-                        if (input$Sampcluplotshowlabtf) {
-                              lab <- row.names(Maindata$reducedata)
+                        if (input$Sampselectfeatincludebulktf && length(input$Sampselectfeatincludebulk) > 0) {
+                        drawdata <- data.frame(x=c(Maindata$allsumtable[input$Sampcluplotselectfeat[1],],Maindata$ENCODEcounttable[input$Sampcluplotselectfeat[1],]),y=c(Maindata$allsumtable[input$Sampcluplotselectfeat[2],],Maindata$ENCODEcounttable[input$Sampcluplotselectfeat[2],]),Cluster=c(Maindata$cluster,rep("Bulk",ncol(Maindata$ENCODEcounttable))),stringsAsFactors = F)
+                        lab <- c(colnames(Maindata$allsumtable),colnames(Maindata$ENCODEcounttable))
                         } else {
-                              lab <- NULL
+                              drawdata <- data.frame(x=Maindata$allsumtable[input$Sampcluplotselectfeat[1],],y=Maindata$allsumtable[input$Sampcluplotselectfeat[2],],Cluster=Maindata$cluster,stringsAsFactors = F)
+                              lab <- colnames(Maindata$allsumtable)
                         }
                   }
-                  scatterD3(x = drawdata$x, y = drawdata$y, tooltip_text = row.names(Maindata$reducedata), col_lab = "Cluster", col_var = as.numeric(drawdata$Cluster), lab = lab, xlab = input$Sampcluplotselectfeat[1], ylab = input$Sampcluplotselectfeat[2], transitions = TRUE)         
+                  if (!input$Sampcluplotshowlabtf) {
+                        lab <- NULL
+                  }
+                  scatterD3(x = drawdata$x, y = drawdata$y, col_lab = "Cluster", col_var = drawdata$Cluster, lab = lab, xlab = input$Sampcluplotselectfeat[1], ylab = input$Sampcluplotselectfeat[2], transitions = TRUE)         
             }
       })
       
@@ -799,7 +798,12 @@ shinyServer(function(input, output,session) {
       
       output$Sampbulkcorheatmap <- d3heatmap::renderD3heatmap({
             if (!is.null(Maindata$bulkcorres)) {
-                  d3heatmap::d3heatmap(Maindata$bulkcorres,color=colorRampPalette(c("blue", "red"))(100))
+                  tmp <- Maindata$bulkcorres
+                  if (input$Sampbulkcorplotstdtf) {
+                        tmp <- t(apply(tmp,1,scale))
+                  }
+                  dimnames(tmp) <- dimnames(Maindata$bulkcorres)
+                  d3heatmap::d3heatmap(tmp,color=colorRampPalette(c("blue", "red"))(100))
             }
       })
       
@@ -807,8 +811,13 @@ shinyServer(function(input, output,session) {
             filename = function() { 'Corheatmap.pdf' },
             content = function(file) {   
                   if (!is.null(Maindata$bulkcorres)) {
+                        tmp <- Maindata$bulkcorres
+                        if (input$Sampbulkcorplotstdtf) {
+                              tmp <- t(apply(tmp,1,scale))
+                        }
+                        dimnames(tmp) <- dimnames(Maindata$bulkcorres)
                         pdf(file, width=20, height=20)
-                        heatmap.2(Maindata$bulkcorres,col=colorRampPalette(c("blue", "red"))(100),trace="none",margins=c(10,10),lhei=c(1,8),lwid=c(1,8))
+                        heatmap.2(tmp,col=colorRampPalette(c("blue", "red"))(100),trace="none",margins=c(10,10),lhei=c(1,8),lwid=c(1,8))
                         dev.off()
                   }
             }
@@ -853,63 +862,108 @@ shinyServer(function(input, output,session) {
       
       output$Featselectclusterui <- renderUI({
             if (!is.null(Maindata$cluster)) {
-                  selectInput("Featselectcluster","Select clusters where ANOVA will be performed (at least two should be selected)",unique(Maindata$cluster),selected = sort(unique(Maindata$cluster))[1:2],multiple = T)
+                  selectInput("Featselectcluster","Select clusters where ANOVA or t test will be performed (at least two should be selected)",unique(Maindata$cluster),selected = sort(unique(Maindata$cluster))[1:2],multiple = T)
+            }
+      })
+      
+      output$Featttestaltui <- renderUI({
+            if ((input$Featrunallclustertf && length(unique(Maindata$cluster)) == 2) || (!input$Featrunallclustertf && length(input$Featselectcluster) == 2)) {
+                  radioButtons("Featttestalt","Select alternative hypothesis for t test",c("two.sided", "less", "greater"))      
+            }
+      })
+      
+      output$Featttestalttextui <- renderUI({
+            if ((input$Featrunallclustertf && length(unique(Maindata$cluster)) == 2) || (!input$Featrunallclustertf && length(input$Featselectcluster) == 2)) {
+                  clu <- Maindata$cluster
+                  if (!input$Featrunallclustertf) {
+                        clu <- clu[clu %in% as.numeric(input$Featselectcluster)]
+                  }
+                  uclu <- unique(clu)
+                  if (input$Featttestalt=="two.sided") {
+                        p(paste0("Cluster ",uclu[1]," will be compared with cluster ",uclu[2],". The alternative hypothesis is that Cluster ",uclu[1]," is not equal to cluster ",uclu[2],"."))
+                  } else {
+                        p(paste0("Cluster ",uclu[1]," will be compared with cluster ",uclu[2],". The alternative hypothesis is that Cluster ",uclu[1]," is ",input$Featttestalt," than cluster ",uclu[2],"."))
+                  }
+                  
+                  
+                  
             }
       })
       
       observe({
             if (input$Featrunbutton > 0) {
                   isolate({
-                        withProgress(message = 'Performing ANOVA',{
-                              clu <- Maindata$cluster
-                              tmp <- Maindata$allsumtable[Maindata$sumtablenametype %in% input$Featselectfeattype,,drop=F]
-                              if (nrow(tmp)==0) {
-                                    tmp <- Maindata$allsumtable
-                              }
-                              if (input$Featrunallclustertf) {
-                                    data <- tmp
-                              } else {
-                                    data <- tmp[,clu %in% as.numeric(input$Featselectcluster)]
-                                    clu <- clu[clu %in% as.numeric(input$Featselectcluster)]
-                              }
-                              totalSS <- rowSums((sweep(data,1,rowMeans(data),"-"))^2)
-                              cluSS <- sapply(unique(clu),function(i) {
-                                    rowSums((sweep(data[,clu==i,drop=F],1,rowMeans(data[,clu==i,drop=F]),"-"))^2)
-                              })
-                              Fstat <- ((totalSS-rowSums(cluSS))/(length(unique(clu)) - 1 ))/(rowSums(cluSS)/(ncol(data) - length(unique(clu))))          
-                              FDR <- p.adjust(pf(Fstat,(length(unique(clu)) - 1 ),(ncol(data) - length(unique(clu))),lower.tail = F),method="fdr")
-                        })  
-                        Maindata$Featres <- cbind(Fstat,FDR)
+                        if ((input$Featrunallclustertf && length(unique(Maindata$cluster)) > 2) || (!input$Featrunallclustertf && length(input$Featselectcluster) > 2)) {
+                              withProgress(message = 'Performing ANOVA',{
+                                    clu <- Maindata$cluster
+                                    tmp <- Maindata$allsumtable[Maindata$sumtablenametype %in% input$Featselectfeattype,,drop=F]
+                                    if (nrow(tmp)==0) {
+                                          tmp <- Maindata$allsumtable
+                                    }
+                                    if (input$Featrunallclustertf) {
+                                          data <- tmp
+                                    } else {
+                                          data <- tmp[,clu %in% as.numeric(input$Featselectcluster)]
+                                          clu <- clu[clu %in% as.numeric(input$Featselectcluster)]
+                                    }
+                                    totalSS <- rowSums((sweep(data,1,rowMeans(data),"-"))^2)
+                                    cluSS <- sapply(unique(clu),function(i) {
+                                          rowSums((sweep(data[,clu==i,drop=F],1,rowMeans(data[,clu==i,drop=F]),"-"))^2)
+                                    })
+                                    Fstat <- ((totalSS-rowSums(cluSS))/(length(unique(clu)) - 1 ))/(rowSums(cluSS)/(ncol(data) - length(unique(clu))))          
+                                    FDR <- p.adjust(pf(Fstat,(length(unique(clu)) - 1 ),(ncol(data) - length(unique(clu))),lower.tail = F),method="fdr")
+                              })  
+                              Maindata$Featres <- data.frame(Feature=row.names(data),Fstatistics=Fstat,FDR=FDR,stringsAsFactors = F)
+                        } else if ((input$Featrunallclustertf && length(unique(Maindata$cluster)) == 2) || (!input$Featrunallclustertf && length(input$Featselectcluster) == 2)) {
+                              withProgress(message = 'Performing t-test',{
+                                    clu <- Maindata$cluster
+                                    tmp <- Maindata$allsumtable[Maindata$sumtablenametype %in% input$Featselectfeattype,,drop=F]
+                                    if (nrow(tmp)==0) {
+                                          tmp <- Maindata$allsumtable
+                                    }
+                                    if (input$Featrunallclustertf) {
+                                          data <- tmp
+                                    } else {
+                                          data <- tmp[,clu %in% as.numeric(input$Featselectcluster)]
+                                          clu <- clu[clu %in% as.numeric(input$Featselectcluster)]
+                                    }
+                                    uclu <- unique(clu)
+                                    res <- t(apply(data,1,function(i) {
+                                          tmptest <- t.test(i[clu==uclu[1]],i[clu==uclu[2]],alternative = input$Featttestalt)
+                                          c(tmptest$statistic,tmptest$p.value)
+                                    }))
+                                    FDR <- p.adjust(res[,2],method="fdr")
+                              })  
+                              Maindata$Featres <- data.frame(Feature=row.names(data),tstatistics=res[,1],FDR=FDR,stringsAsFactors = F)
+                        }
                   })
             }
       })
       
       output$Featrestable <- DT::renderDataTable({
-            tmp <- data.frame(Feature=row.names(Maindata$Featres),Fstatistics=Maindata$Featres[,1],FDR=Maindata$Featres[,2],stringsAsFactors = F)
-            DT::datatable(tmp,filter="top",rownames = F, options = list(columnDefs = list(list(className="dt-body-left","targets"="_all"))))
+            DT::datatable(Maindata$Featres,filter="top",rownames = F, options = list(columnDefs = list(list(className="dt-body-left","targets"="_all"))))
       })
       
       output$Featdownloadbutton <- downloadHandler(
             filename = function() { "KeyFeatures.txt" },
             content = function(file) {                  
-                  tmp <- data.frame(Feature=row.names(Maindata$Featres),Fstatistics=Maindata$Featres[,1],FDR=Maindata$Featres[,2],stringsAsFactors = F)
-                  write.table(tmp,file,row.names=F,quote=F,sep="\t")     
+                  write.table(Maindata$Featres,file,row.names=F,quote=F,sep="\t")     
             }
       )
       
       
       output$FeatSumtext <- renderText({
             if (!is.null(Maindata$Featres)) {
-                  paste("There are ",sum(Maindata$Featres[,2] < 0.05),"significant features, which is",round(mean(Maindata$Featres[,2] < 0.05),digits=4),"percent of all features")
+                  paste("There are ",sum(Maindata$Featres$FDR < 0.05),"significant features, which is",round(mean(Maindata$Featres$FDR < 0.05),digits=4),"percent of all features")
             }
       })
       
       output$FeatSumplot <- renderPlot({
             if (!is.null(Maindata$Featres)) {
-                  if (input$Featviewtab == "Fstatistics") {
-                        hist(Maindata$Featres[,1],main="Histogram for F statistics",xlab="F statistics",ylab="Frequency")
+                  if (input$Featviewtab == "statistics") {
+                        hist(Maindata$Featres[,2],main="Histogram for statistics",xlab="statistics",ylab="Frequency")
                   } else {
-                        hist(Maindata$Featres[,2],main="Histogram for FDR",xlab="FDR",ylab="Frequency")
+                        hist(Maindata$Featres[,3],main="Histogram for FDR",xlab="FDR",ylab="Frequency")
                   }
                   
             }

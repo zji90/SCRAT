@@ -69,7 +69,7 @@ shinyUI(
                                 ),
                                 conditionalPanel(condition="input.Sumuploadsumtable==0",
                                                  wellPanel(
-                                                       checkboxGroupInput("Sumselectmet","Choose Summarizing Method",list("TSS Upstream"="TSS","ENCODE Cluster"="ENCL","Motif Sites"="MOTIF","GSEA Gene Sets"="GSEA","Upload BED"="Upload"),selected="TSS"),
+                                                       checkboxGroupInput("Sumselectmet","Choose Summarizing Method",list("ENCODE Cluster"="ENCL","Motif Sites"="MOTIF","GSEA Gene Sets"="GSEA","Upload BED"="Upload"),selected="ENCL"),
                                                        hr(),
                                                        checkboxInput("Sumlogtf","Log2 transformation",value=T),
                                                        checkboxInput("Sumaddcv","Add coefficient of variation (sd/mean) information",value=T),
@@ -83,12 +83,12 @@ shinyUI(
                                                        actionButton("Sumrunbutton","Run Summarization")
                                                  ),                        
                                                  wellPanel(
-                                                       selectInput("Sumdetailchoose","Method Details",list("TSS Up/Downstream"="TSS","ENCODE Cluster"="ENCL","Motif Sites"="MOTIF","GSEA Gene Sets"="GSEA","Upload BED"="Upload")),
-                                                       conditionalPanel(condition="input.Sumdetailchoose=='TSS'",
-                                                                        helpText('For each gene, sum all reads overlapping TSS upstream and downstream region. For gene with ENTREZ id of 18999, the feature name will be GENE:18999'),
-                                                                        textInput("SumTSSupregionbp","TSS upstream base pair","1000"),
-                                                                        textInput("SumTSSdownregionbp","TSS downstream base pair","500")
-                                                       ),
+                                                       selectInput("Sumdetailchoose","Method Details",list("ENCODE Cluster"="ENCL","Motif Sites"="MOTIF","GSEA Gene Sets"="GSEA","Upload BED"="Upload")),
+                                                       # conditionalPanel(condition="input.Sumdetailchoose=='TSS'",
+                                                       #                  helpText('For each gene, sum all reads overlapping TSS upstream and downstream region. For gene with ENTREZ id of 18999, the feature name will be GENE:18999'),
+                                                       #                  textInput("SumTSSupregionbp","TSS upstream base pair","1000"),
+                                                       #                  textInput("SumTSSdownregionbp","TSS downstream base pair","500")
+                                                       # ),
                                                        #                                       conditionalPanel(condition="input.Sumdetailchoose=='ENLO'",
                                                        #                                                        helpText('200 bp windows of genomic loci that are potential regulatory elements were precompiled based on ENCODE DNase-seq data.'),
                                                        #                                                        checkboxInput("SumENLOreducetf","Merge adjacent windows",value=F)
@@ -154,10 +154,7 @@ shinyUI(
                                 helpText("Samples will be clustered using features obtained in step 2."),
                                 br(),
                                 wellPanel(uiOutput("Sampselectfeattypeui"),
-                                          helpText("Select feature type to be included in the sample-level analysis. If no feature type is selected, all feature types will be used in the analsysis."),
-                                          checkboxInput("Sampselectfeatincludebulktf","Include bulk samples"),
-                                          conditionalPanel(condition="input.Sampselectfeatincludebulktf==1",
-                                                           uiOutput("Sampselectfeatincludebulkui"))
+                                          helpText("Select feature type to be included in the sample-level analysis. If no feature type is selected, all feature types will be used in the analsysis.")
                                 ),
                                 wellPanel(
                                       radioButtons("Sampmainmet","",list("Sample Clustering"="Clustering","Bulk Comparison"="Bulk"))
@@ -213,6 +210,9 @@ shinyUI(
                                                                       uiOutput("Sampcluplotselectfeatui")
                                                                 ),
                                                                 uiOutput("Sampcluplotdim2optionui"),
+                                                                conditionalPanel(condition="input.Sampcludimredmet=='PCA'",checkboxInput("Sampselectfeatincludebulktf","Include bulk samples")),
+                                                                conditionalPanel(condition="input.Sampselectfeatincludebulktf==1",
+                                                                                 uiOutput("Sampselectfeatincludebulkui")),
                                                                 conditionalPanel("input.Sampcluplotselectfeat.length==2",
                                                                                  scatterD3::scatterD3Output("Sampcluplotdim2",width="700px",height="500px")      
                                                                 ),
@@ -233,7 +233,7 @@ shinyUI(
                                 ),
                                 conditionalPanel(condition="input.Sampmainmet=='Bulk'",
                                                  tabsetPanel(
-                                                       tabPanel("Heatmap",br(),downloadButton("Sampbulkcorplotdownload"),d3heatmap::d3heatmapOutput("Sampbulkcorheatmap"),width="500px",height="500px"),
+                                                       tabPanel("Heatmap",br(),checkboxInput("Sampbulkcorplotstdtf","Standardize each row to have zero mean and unit variance",value=T),downloadButton("Sampbulkcorplotdownload"),d3heatmap::d3heatmapOutput("Sampbulkcorheatmap"),width="500px",height="500px"),
                                                        tabPanel("Table",br(),downloadButton("Sampbulkcortabledownload"),DT::dataTableOutput("Sampbulkcortable"))
                                                  )
                                 )
@@ -248,14 +248,16 @@ shinyUI(
                           hr(),
                           sidebarPanel(
                                 fluidRow(actionButton("Featpreviousstepbutton","Previous Step"),align="center"),
-                                helpText("Perform ANOVA tests to identify key features that mostly explains the between cluster variance. The sample clusters are obtained in step 3."),
+                                helpText("Perform ANOVA or t tests to identify key features that mostly explains the between cluster variance. The sample clusters are obtained in step 3."),
                                 wellPanel(uiOutput("Featselectfeattypeui"),
                                           helpText("Select feature type to be included in the sample-level analysis. If no feature type is selected, all feature types will be used in the analsysis.")
                                 ),    
                                 wellPanel(
-                                      checkboxInput("Featrunallclustertf","Perform ANOVA for all clusters",value=T),
+                                      checkboxInput("Featrunallclustertf","Perform tests for all clusters",value=T),
                                       conditionalPanel(condition="input.Featrunallclustertf==0",uiOutput("Featselectclusterui")),
-                                      actionButton("Featrunbutton","Perform ANOVA")      
+                                      uiOutput("Featttestaltui"),
+                                      uiOutput("Featttestalttextui"),
+                                      actionButton("Featrunbutton","Perform Test")      
                                 )
                                 ,width=3),
                           mainPanel(
@@ -265,7 +267,7 @@ shinyUI(
                                       tabPanel("Summary",
                                                br(),
                                                textOutput("FeatSumtext"),
-                                               radioButtons("Featviewtab","",c("Fstatistics","FDR")),
+                                               radioButtons("Featviewtab","",c("statistics","FDR")),
                                                plotOutput("FeatSumplot")
                                       )                                      
                                 )                                
