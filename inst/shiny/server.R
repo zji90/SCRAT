@@ -934,7 +934,7 @@ shinyServer(function(input, output,session) {
                                     }
                                     uclu <- unique(clu)
                                     res <- t(apply(data,1,function(i) {
-                                          if (var(i[clu==uclu[1]])==0 & var(i[clu==uclu[2]])==0) {
+                                          if (length(unique(i[clu==uclu[1]]))==1 & length(unique(i[clu==uclu[2]]))==1) {
                                                 c(NA,NA)
                                           } else{
                                                 tmptest <- t.test(i[clu==uclu[1]],i[clu==uclu[2]],alternative = input$Featttestalt,var.equal = T)
