@@ -386,7 +386,12 @@ shinyServer(function(input, output,session) {
       #Sample clustering
       
       output$Sampselectfeattypeui <- renderUI({
-            checkboxGroupInput("Sampselectfeattype","Select Feature Type",unique(Maindata$sumtablenametype),selected=unique(Maindata$sumtablenametype))
+            tmp <- unique(Maindata$sumtablenametype)
+            if (length(grep("ENCL",tmp)) > 0) {
+                  checkboxGroupInput("Sampselectfeattype","Select Feature Type",tmp,selected=tmp[grep("ENCL",tmp)])       
+            } else {
+                  checkboxGroupInput("Sampselectfeattype","Select Feature Type",tmp,selected=tmp)       
+            }
       })
       
       output$Sampselectfeatincludebulkui <- renderUI({
@@ -463,7 +468,7 @@ shinyServer(function(input, output,session) {
       output$Sampcluplotdim2optionui <- renderUI({
             if (!is.null(input$Sampcluplotselectfeat) && (length(input$Sampcluplotselectfeat)==2)) {
                   tagList(checkboxInput("Sampcluplotshowlabtf","Show label",value=T),
-                          helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details"))      
+                          helpText("Use computer mouse to drag and zoom the plot. Move the curser to individual points to reveal details. Move the curser to cluster id on the right to highlight points belonging to each cluster."))      
             }
       })
       
@@ -929,8 +934,12 @@ shinyServer(function(input, output,session) {
                                     }
                                     uclu <- unique(clu)
                                     res <- t(apply(data,1,function(i) {
-                                          tmptest <- t.test(i[clu==uclu[1]],i[clu==uclu[2]],alternative = input$Featttestalt)
-                                          c(tmptest$statistic,tmptest$p.value)
+                                          if (var(i[clu==uclu[1]])==0 & var(i[clu==uclu[2]])==0) {
+                                                c(NA,NA)
+                                          } else{
+                                                tmptest <- t.test(i[clu==uclu[1]],i[clu==uclu[2]],alternative = input$Featttestalt,var.equal = T)
+                                                c(tmptest$statistic,tmptest$p.value)      
+                                          }
                                     }))
                                     FDR <- p.adjust(res[,2],method="fdr")
                               })  

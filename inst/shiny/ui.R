@@ -36,7 +36,7 @@ shinyUI(
                                 ),
                                 wellPanel(
                                       h4("Filter Bam Files"),
-                                      textInput("InputFilterreads","Exclude samples with reads less than","1000"),
+                                      textInput("InputFilterreads","Exclude samples with reads less than","500"),
                                       uiOutput("InputFiltersampleui")
                                 ),
                                 width=3),
@@ -69,7 +69,7 @@ shinyUI(
                                 ),
                                 conditionalPanel(condition="input.Sumuploadsumtable==0",
                                                  wellPanel(
-                                                       checkboxGroupInput("Sumselectmet","Choose Summarizing Method",list("ENCODE Cluster"="ENCL","Motif Sites"="MOTIF","GSEA Gene Sets"="GSEA","Upload BED"="Upload"),selected="ENCL"),
+                                                       checkboxGroupInput("Sumselectmet","Choose Summarizing Method",list("ENCODE Cluster"="ENCL","Motif Sites"="MOTIF","GSEA Gene Sets"="GSEA","Upload BED"="Upload"),selected=c("ENCL","MOTIF","GSEA")),
                                                        hr(),
                                                        checkboxInput("Sumlogtf","Log2 transformation",value=T),
                                                        checkboxInput("Sumaddcv","Add coefficient of variation (sd/mean) information",value=T),
@@ -106,9 +106,9 @@ shinyUI(
                                                        ),
                                                        conditionalPanel(condition="input.Sumdetailchoose=='GSEA'",
                                                                         helpText('For each GSEA gene set, sum all reads overlapping any gene TSS upstream region from the gene set. For GSEA gene set HALLMARK_HYPOXIA, the feature name will be GSEA:HALLMARK_HYPOXIA'),
-                                                                        textInput("SumGSEAupregionbp","TSS upstream base pair","1000"),
-                                                                        textInput("SumGSEAdownregionbp","TSS downstream base pair","500"),
-                                                                        checkboxGroupInput("SumGSEAselect","Include gene sets from",list("Hallmark gene sets (50 gene sets)"="h.all","Positional gene sets (326 gene sets)"="c1.all","Curated gene sets: chemical and genetic perturbations (3395 gene sets)"="c2.cgp","Curated gene sets: canonical pathways (1330 gene sets)"="c2.cp","Motif gene sets: microRNA targets (221 gene sets)"="c3.mir","Motif gene sets: transcription factor targets (615 gene sets)"="c3.tft","Computational gene sets: cancer gene neighborhoods (427 gene sets)"="c4.cgn","Computational gene sets: cancer modules (431 gene sets)"="c4.cm","GO gene sets: biological process (825 gene sets)"="c5.bp","GO gene sets: cellular component (233 gene sets)"="c5.cc","GO gene sets: molecular function (396 gene sets)"="c5.mf","Oncogenic signatures (189 gene sets)"="c6.all","Immunologic signatures (1910 gene sets)"="c7.all"),selected = c("h.all","c1.all","c2.cgp","c2.cp","c3.mir","c3.tft","c4.cgn","c4.cm","c5.bp","c5.cc","c5.mf","c6.all","c7.all")),
+                                                                        textInput("SumGSEAupregionbp","TSS upstream base pair","3000"),
+                                                                        textInput("SumGSEAdownregionbp","TSS downstream base pair","1000"),
+                                                                        checkboxGroupInput("SumGSEAselect","Include gene sets from",list("Hallmark gene sets (50 gene sets)"="h.all","Positional gene sets (326 gene sets)"="c1.all","Curated gene sets: chemical and genetic perturbations (3395 gene sets)"="c2.cgp","Curated gene sets: canonical pathways (1330 gene sets)"="c2.cp","Motif gene sets: microRNA targets (221 gene sets)"="c3.mir","Motif gene sets: transcription factor targets (615 gene sets)"="c3.tft","Computational gene sets: cancer gene neighborhoods (427 gene sets)"="c4.cgn","Computational gene sets: cancer modules (431 gene sets)"="c4.cm","GO gene sets: biological process (825 gene sets)"="c5.bp","GO gene sets: cellular component (233 gene sets)"="c5.cc","GO gene sets: molecular function (396 gene sets)"="c5.mf","Oncogenic signatures (189 gene sets)"="c6.all","Immunologic signatures (1910 gene sets)"="c7.all"),selected = c("c5.bp","c5.cc","c5.mf")),
                                                                         helpText(a("Browse GSEA gene sets",href="http://software.broadinstitute.org/gsea/msigdb/genesets.jsp",target="_blank"))
                                                        ),
                                                        conditionalPanel(condition="input.Sumdetailchoose=='Upload'",
@@ -170,7 +170,7 @@ shinyUI(
                                                        conditionalPanel(condition="(input.Sampcludimredmet=='PCA' && input.Sampcluoptdimnum==0)||input.Sampcludimredmet=='tSNE'",textInput("Sampcluchoosedimnum","Choose number of dimensions",2)),
                                                        
                                                        hr(),
-                                                       radioButtons("Sampcluclumet","Clustering method",list("K-means"="kmeans","Hierarchical Clustering"="hclust","Model-Based Clustering (mclust)"="mclust","Upload"="Upload")),
+                                                       radioButtons("Sampcluclumet","Clustering method",list("Hierarchical Clustering"="hclust","K-means"="kmeans","Model-Based Clustering (mclust)"="mclust","Upload"="Upload")),
                                                        conditionalPanel(condition="input.Sampcluclumet!='Sample'",
                                                                         checkboxInput("Sampcluoptclunum","Automatically choose optimal number of clusters",value = T),
                                                                         conditionalPanel(condition="input.Sampcluoptclunum==0",textInput("Sampcluchooseclunum","Choose number of clusters",2))
@@ -205,14 +205,13 @@ shinyUI(
                                                                 downloadButton("Sampclutabledownload","Download Clustering Table"),
                                                                 br(),
                                                                 wellPanel(
-                                                                      h4("Visualization Options"),
                                                                       checkboxInput("Sampcluplotorifeattf","Plot original features",value=F),
-                                                                      uiOutput("Sampcluplotselectfeatui")
+                                                                      uiOutput("Sampcluplotselectfeatui"),
+                                                                      conditionalPanel(condition="input.Sampcludimredmet=='PCA'",checkboxInput("Sampselectfeatincludebulktf","Include bulk samples")),
+                                                                      conditionalPanel(condition="input.Sampselectfeatincludebulktf==1",
+                                                                                       uiOutput("Sampselectfeatincludebulkui")),
+                                                                      uiOutput("Sampcluplotdim2optionui")
                                                                 ),
-                                                                uiOutput("Sampcluplotdim2optionui"),
-                                                                conditionalPanel(condition="input.Sampcludimredmet=='PCA'",checkboxInput("Sampselectfeatincludebulktf","Include bulk samples")),
-                                                                conditionalPanel(condition="input.Sampselectfeatincludebulktf==1",
-                                                                                 uiOutput("Sampselectfeatincludebulkui")),
                                                                 conditionalPanel("input.Sampcluplotselectfeat.length==2",
                                                                                  scatterD3::scatterD3Output("Sampcluplotdim2",width="700px",height="500px")      
                                                                 ),
