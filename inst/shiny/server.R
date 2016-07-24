@@ -950,7 +950,10 @@ shinyServer(function(input, output,session) {
       })
       
       output$Featrestable <- DT::renderDataTable({
-            DT::datatable(Maindata$Featres,filter="top",rownames = F, options = list(columnDefs = list(list(className="dt-body-left","targets"="_all"))))
+            DT::datatable(Maindata$Featres,filter="top",rownames = F, options = list(columnDefs = list(list(className="dt-body-left","targets"="_all",render = JS(
+                  "function(data, type, row, meta) {",
+                  "return data === null ? 'NA' : data;",
+                  "}")))))
       })
       
       output$Featdownloadbutton <- downloadHandler(
