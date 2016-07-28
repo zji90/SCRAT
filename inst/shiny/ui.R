@@ -112,8 +112,14 @@ shinyUI(
                                                                         helpText(a("Browse GSEA gene sets",href="http://software.broadinstitute.org/gsea/msigdb/genesets.jsp",target="_blank"))
                                                        ),
                                                        conditionalPanel(condition="input.Sumdetailchoose=='Upload'",
-                                                                        helpText('Upload BED file to define genomic regions. BED files are tab-delimited files. First column: chromosome name; second column: start site; third column: end site; Optional fourth column: feature id. If the fourth column is missing, then each row will be treated as seperate features. Otherwise rows with same feature id will be pulled together as a single feature.'),
-                                                                        fileInput('SumuploadFile', 'Choose File', accept = ".bed"),
+                                                                        radioButtons("SumuploadFilemultipletf",NULL,list("Upload One File"="One","Upload Multiple Files"="Multiple")),
+                                                                        conditionalPanel(condition="input.SumuploadFilemultipletf=='One'",helpText('Upload BED file to define genomic regions. BED files are tab-delimited files. First column: chromosome name; second column: start site; third column: end site; Optional fourth column: feature id. If the fourth column is missing, then each row will be treated as seperate features. Otherwise rows with same feature id will be pulled together as a single feature.'),
+                                                                                         fileInput('SumuploadFile', 'Choose File', accept = ".bed")
+                                                                                         ),
+                                                                        conditionalPanel(condition="input.SumuploadFilemultipletf=='Multiple'",helpText('Upload BED file to define genomic regions. BED files are tab-delimited files. First column: chromosome name; second column: start site; third column: end site. Each BED file will be treated as a single feature: all genomic features in one BED file will be pooled together.'),
+                                                                                         fileInput('SumuploadFile2', 'Choose Files', accept = ".bed",multiple = T)
+                                                                                         
+                                                                        ),
                                                                         p(actionButton("Sumuploadreadin","Read in")),
                                                                         textOutput("Sumuploaddetail")
                                                        )

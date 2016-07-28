@@ -120,32 +120,49 @@ shinyServer(function(input, output,session) {
       
       ### Summarizing ###
       
+      observe({input$SumuploadFile})
+      
       observe({
             if (input$Sumuploadreadin > 0) {
                   isolate({
-                        FileHandle <- input$SumuploadFile                        
-                        if (!is.null(FileHandle)) {
-                              tmp <- read.table(FileHandle$datapath,as.is=T,sep="\t")
-                              if (ncol(tmp)==3) {
-                                    gr <- GRanges(seqnames=tmp[,1],IRanges(start=tmp[,2],end=tmp[,3]))
-                                    names(gr) <- paste0("UPLOAD:",tmp[,1],":",tmp[,2],"-",tmp[,3])
-                              } else if (ncol(tmp)==4) {
-                                    gr <- GRangesList()
-                                    for (i in unique(tmp[,4])) {
-                                          tmpgr <- GRanges(seqnames=tmp[tmp[,4]==i,1],IRanges(start=tmp[tmp[,4]==i,2],end=tmp[tmp[,4]==i,3]))
-                                          gr[[paste0("MOTIF:",i)]] <- tmpgr
+                        if (input$SumuploadFilemultipletf=="One") {
+                              FileHandle <- input$SumuploadFile      
+                              if (!is.null(FileHandle)) {
+                                    tmp <- read.table(FileHandle$datapath,as.is=T,sep="\t")
+                                    if (ncol(tmp)==3) {
+                                          gr <- GRanges(seqnames=tmp[,1],IRanges(start=tmp[,2],end=tmp[,3]))
+                                          names(gr) <- paste0("UPLOAD:",tmp[,1],":",tmp[,2],"-",tmp[,3])
+                                    } else if (ncol(tmp)==4) {
+                                          gr <- GRangesList()
+                                          for (i in unique(tmp[,4])) {
+                                                tmpgr <- GRanges(seqnames=tmp[tmp[,4]==i,1],IRanges(start=tmp[tmp[,4]==i,2],end=tmp[tmp[,4]==i,3]))
+                                                gr[[paste0("MOTIF:",i)]] <- tmpgr
+                                          }
                                     }
+                                    Maindata$uploadgr <- gr      
                               }
-                              Maindata$uploadgr <- gr      
-                              
-                        }                        
+                        } else {
+                              FileHandle <- input$SumuploadFile2
+                              if (!is.null(FileHandle)) {
+                                    gr <- GRangesList()
+                                    for (i in 1:length(FileHandle$datapath)) {
+                                          tmp <- read.table(FileHandle$datapath[[i]],as.is=T,sep="\t")
+                                          gr[[paste0("UPLOAD",i)]] <- GRanges(seqnames=tmp[,1],IRanges(start=tmp[,2],end=tmp[,3]))
+                                    }
+                                    Maindata$uploadgr <- gr
+                              }
+                        }
                   })
             }
       })
       
       output$Sumuploaddetail <- renderText({
             if (!is.null(Maindata$uploadgr)) {
-                  paste("Uploaded bed file has",length(Maindata$uploadgr),"loci.")
+                  if (input$SumuploadFilemultipletf=="One") {
+                        paste("Uploaded bed file has",length(Maindata$uploadgr),"loci.")
+                  } else {
+                        paste("Uploaded",length(Maindata$uploadgr),"bed files.")     
+                  }
             }
       })
       
@@ -654,8 +671,8 @@ shinyServer(function(input, output,session) {
                         }
                   } else {
                         if (input$Sampselectfeatincludebulktf && length(input$Sampselectfeatincludebulk) > 0) {
-                        drawdata <- data.frame(x=c(Maindata$allsumtable[input$Sampcluplotselectfeat[1],],Maindata$ENCODEcounttable[input$Sampcluplotselectfeat[1],]),y=c(Maindata$allsumtable[input$Sampcluplotselectfeat[2],],Maindata$ENCODEcounttable[input$Sampcluplotselectfeat[2],]),Cluster=c(Maindata$cluster,rep("Bulk",ncol(Maindata$ENCODEcounttable))),stringsAsFactors = F)
-                        lab <- c(colnames(Maindata$allsumtable),colnames(Maindata$ENCODEcounttable))
+                              drawdata <- data.frame(x=c(Maindata$allsumtable[input$Sampcluplotselectfeat[1],],Maindata$ENCODEcounttable[input$Sampcluplotselectfeat[1],]),y=c(Maindata$allsumtable[input$Sampcluplotselectfeat[2],],Maindata$ENCODEcounttable[input$Sampcluplotselectfeat[2],]),Cluster=c(Maindata$cluster,rep("Bulk",ncol(Maindata$ENCODEcounttable))),stringsAsFactors = F)
+                              lab <- c(colnames(Maindata$allsumtable),colnames(Maindata$ENCODEcounttable))
                         } else {
                               drawdata <- data.frame(x=Maindata$allsumtable[input$Sampcluplotselectfeat[1],],y=Maindata$allsumtable[input$Sampcluplotselectfeat[2],],Cluster=Maindata$cluster,stringsAsFactors = F)
                               lab <- colnames(Maindata$allsumtable)
