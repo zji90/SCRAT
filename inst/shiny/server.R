@@ -5,7 +5,6 @@
 ##   Author:Zhicheng Ji, Weiqiang Zhou, Hongkai Ji  ##
 ##       Maintainer:Zhicheng Ji (zji4@jhu.edu)      ##
 ######################################################
-##testing
 library(shiny)
 library(d3heatmap)
 library(GenomicAlignments)
