@@ -160,7 +160,7 @@ shinyUI(
                                 helpText("Samples will be clustered using features obtained in step 2."),
                                 br(),
                                 wellPanel(uiOutput("Sampselectfeattypeui"),
-                                          helpText("Select feature type to be included in the sample-level analysis. If no feature type is selected, all feature types will be used in the analsysis.")
+                                          helpText("Select feature type to be included in the similarity analysis. If no feature type is selected, all feature types will be used in the analsysis.")
                                 ),
                                 wellPanel(
                                       radioButtons("Sampmainmet","",list("Sample Clustering"="Clustering","Similarity to existing cell types"="Bulk"))
@@ -255,7 +255,7 @@ shinyUI(
                                 fluidRow(actionButton("Featpreviousstepbutton","Previous Step"),align="center"),
                                 helpText("Perform ANOVA or t tests to identify key features that mostly explains the between cluster variance. The sample clusters are obtained in step 3."),
                                 wellPanel(uiOutput("Featselectfeattypeui"),
-                                          helpText("Select feature type to be included in the sample-level analysis. If no feature type is selected, all feature types will be used in the analsysis.")
+                                          helpText("Select feature type to be included in the differential feature analysis. If no feature type is selected, all feature types will be used in the analsysis.")
                                 ),    
                                 wellPanel(
                                       checkboxInput("Featrunallclustertf","Perform tests for all clusters",value=T),
