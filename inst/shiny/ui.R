@@ -12,7 +12,7 @@ library(scatterD3)
 shinyUI(      
       navbarPage("SCRAT",
                  
-                 tabPanel("Step 1: Input Bam Files",
+                 tabPanel("Step 1: Data input and preprocessing",
                           tags$head(
                                 tags$style(HTML('#Inputnextstepbutton{font-weight: bold;color:blue}')),
                                 tags$style(HTML('#Inputreadin{font-weight: bold;color:blue}'))
@@ -31,7 +31,7 @@ shinyUI(
                                       h5("To upload a summary table from previous SCRAT session, skip this step and go directly to step 2."),
                                       h4("Input Bam Files"),
                                       fileInput('InputFile', 'Choose File', multiple = T, accept = ".bam"),
-                                      checkboxInput("Inputblacklist","Filter black list",value = T),
+                                      checkboxInput("Inputblacklist","Filter blacklist",value = T),
                                       p(actionButton("Inputreadin","Read in"))      
                                 ),
                                 wellPanel(
@@ -45,7 +45,7 @@ shinyUI(
                                 uiOutput("Inputbamnumui"),
                                 DT:: dataTableOutput("Inputbamsummary")
                           )),
-                 tabPanel("Step 2: Summarizing Loci",
+                 tabPanel("Step 2: Feature summarization",
                           tags$head(
                                 tags$style(HTML('#Sumpreviousstepbutton{font-weight: bold;color:blue}')),
                                 tags$style(HTML('#Sumnextstepbutton{font-weight: bold;color:blue}')),
@@ -77,7 +77,7 @@ shinyUI(
                                                        conditionalPanel(condition="input.Sumfiltertf==1",
                                                                         textInput("Sumfilterpercen","Exclude features having more than","90"),
                                                                         textInput("Sumfilterreads","percent of samples whose (normalized) reads are less than","0.01"),
-                                                                        textInput("Sumfiltercv","Exclude features with coefficient of variance (sd/mean) less than","0.01")
+                                                                        textInput("Sumfiltercv","Exclude features with coefficient of variation (sd/mean) less than","0.01")
                                                        ),
                                                        hr(),
                                                        actionButton("Sumrunbutton","Run Summarization")
@@ -145,7 +145,7 @@ shinyUI(
                                 )                                
                           )
                  ),
-                 tabPanel("Step 3: Sample-level Analysis",
+                 tabPanel("Step 3: Cell heterogeneity analysis",
                           tags$head(
                                 tags$style(HTML('#Samppreviousstepbutton{font-weight: bold;color:blue}')),
                                 tags$style(HTML('#Sampnextstepbutton{font-weight: bold;color:blue}')),
@@ -163,7 +163,7 @@ shinyUI(
                                           helpText("Select feature type to be included in the sample-level analysis. If no feature type is selected, all feature types will be used in the analsysis.")
                                 ),
                                 wellPanel(
-                                      radioButtons("Sampmainmet","",list("Sample Clustering"="Clustering","Bulk Comparison"="Bulk"))
+                                      radioButtons("Sampmainmet","",list("Sample Clustering"="Clustering","Similarity to existing cell types"="Bulk"))
                                 ),
                                 wellPanel(
                                       conditionalPanel(condition="input.Sampmainmet=='Clustering'",
@@ -185,7 +185,7 @@ shinyUI(
                                                                         helpText("Upload a file specifying the cluster for each sample."),
                                                                         helpText("First column: sample name; Second column: cluster ID"),
                                                                         helpText("The sample names should be exactly the same as the names of the bam files. All bam files should be included."),
-                                                                        helpText("The two columns should be seperated by space"),
+                                                                        helpText("The two columns should be seperated by Tab"),
                                                                         fileInput('SampcluInputFile', 'Choose File', accept = ".txt"),
                                                                         actionButton('Sampcluuploadbutton',"Upload"),
                                                                         uiOutput("Sampcluuploadstateui")
@@ -213,7 +213,7 @@ shinyUI(
                                                                 wellPanel(
                                                                       checkboxInput("Sampcluplotorifeattf","Plot original features",value=F),
                                                                       uiOutput("Sampcluplotselectfeatui"),
-                                                                      conditionalPanel(condition="input.Sampcludimredmet=='PCA'",checkboxInput("Sampselectfeatincludebulktf","Include bulk samples")),
+                                                                      conditionalPanel(condition="input.Sampcludimredmet=='PCA'",checkboxInput("Sampselectfeatincludebulktf","Include existing cell types")),
                                                                       conditionalPanel(condition="input.Sampselectfeatincludebulktf==1",
                                                                                        uiOutput("Sampselectfeatincludebulkui")),
                                                                       uiOutput("Sampcluplotdim2optionui")
@@ -244,7 +244,7 @@ shinyUI(
                                 )
                           )
                  ),
-                 tabPanel("Step 4: Feature-level Analysis",
+                 tabPanel("Step 4: Differential feature analysis",
                           tags$head(
                                 tags$style(HTML('#Featpreviousstepbutton{font-weight: bold;color:blue}')),
                                 tags$style(HTML('#Featrunbutton{font-weight: bold;color:blue}'))
