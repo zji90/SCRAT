@@ -414,7 +414,7 @@ shinyServer(function(input, output,session) {
       output$Sampselectfeatincludebulkui <- renderUI({
             datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
             load(paste0(datapath,"/ENCODE/ENCL1000.rda"))
-            selectInput("Sampselectfeatincludebulk","Select bulk samples",colnames(ENCODEcount),multiple = T)
+            selectInput("Sampselectfeatincludebulk","Select samples",colnames(ENCODEcount),multiple = T)
       })
       
       observe({
