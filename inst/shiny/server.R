@@ -113,7 +113,7 @@ shinyServer(function(input, output,session) {
       observe({
             if (input$Inputnextstepbutton) {
                   isolate({
-                        updateTabsetPanel(session,"MainMenu",selected = "Step 2: Summarizing Loci")
+                        updateTabsetPanel(session,"MainMenu",selected = "Step 2: Feature summarization")
                   })
             }
       })
@@ -377,7 +377,7 @@ shinyServer(function(input, output,session) {
       observe({
             if (input$Sumpreviousstepbutton) {
                   isolate({
-                        updateTabsetPanel(session,"MainMenu",selected = "Step 1: Input Bam Files")
+                        updateTabsetPanel(session,"MainMenu",selected = "Step 1: Data input and preprocessing")
                   })
             }
       })
@@ -385,7 +385,7 @@ shinyServer(function(input, output,session) {
       observe({
             if (input$Sumnextstepbutton) {
                   isolate({
-                        updateTabsetPanel(session,"MainMenu",selected = "Step 3: Sample-level Analysis")
+                        updateTabsetPanel(session,"MainMenu",selected = "Step 3: Cell heterogeneity analysis")
                   })
             }
       })
@@ -418,7 +418,7 @@ shinyServer(function(input, output,session) {
       })
       
       observe({
-            if (input$MainMenu == "Step 3: Sample-level Analysis" && !is.null(Maindata$allsumtable)) {
+            if (input$MainMenu == "Step 3: Cell heterogeneity analysis" && !is.null(Maindata$allsumtable)) {
                   tmp <- Maindata$allsumtable[Maindata$sumtablenametype %in% input$Sampselectfeattype,,drop=F]
                   if (nrow(tmp)==0) {
                         tmp <- Maindata$allsumtable
@@ -464,7 +464,7 @@ shinyServer(function(input, output,session) {
                   isolate({
                         FileHandle <- input$SampcluInputFile                        
                         if (!is.null(FileHandle)) {
-                              Maindata$uploadclulist <- read.table(FileHandle$datapath,as.is=T,sep=" ")
+                              Maindata$uploadclulist <- read.table(FileHandle$datapath,as.is=T,sep="\t")
                         }                        
                   })
             }
@@ -863,7 +863,7 @@ shinyServer(function(input, output,session) {
       observe({
             if (input$Samppreviousstepbutton) {
                   isolate({
-                        updateTabsetPanel(session,"MainMenu",selected = "Step 2: Summarizing Loci")
+                        updateTabsetPanel(session,"MainMenu",selected = "Step 2: Feature summarization")
                   })
             }
       })
@@ -871,7 +871,7 @@ shinyServer(function(input, output,session) {
       observe({
             if (input$Sampnextstepbutton) {
                   isolate({
-                        updateTabsetPanel(session,"MainMenu",selected = "Step 4: Feature-level Analysis")
+                        updateTabsetPanel(session,"MainMenu",selected = "Step 4: Differential feature analysis")
                   })
             }
       })
@@ -1001,7 +1001,7 @@ shinyServer(function(input, output,session) {
       observe({
             if (input$Featpreviousstepbutton) {
                   isolate({
-                        updateTabsetPanel(session,"MainMenu",selected = "Step 3: Sample-level Analysis")
+                        updateTabsetPanel(session,"MainMenu",selected = "Step 3: Cell heterogeneity analysis")
                   })
             }
       })
