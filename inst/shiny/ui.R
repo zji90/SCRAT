@@ -185,7 +185,7 @@ shinyUI(
                                                                         helpText("Upload a file specifying the cluster for each sample."),
                                                                         helpText("First column: sample name; Second column: cluster ID"),
                                                                         helpText("The sample names should be exactly the same as the names of the bam files. All bam files should be included."),
-                                                                        helpText("The two columns should be seperated by Tab"),
+                                                                        helpText("The two columns should be seperated by Tab."),
                                                                         fileInput('SampcluInputFile', 'Choose File', accept = ".txt"),
                                                                         actionButton('Sampcluuploadbutton',"Upload"),
                                                                         uiOutput("Sampcluuploadstateui")
