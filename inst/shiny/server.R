@@ -6,7 +6,6 @@
 ##       Maintainer:Zhicheng Ji (zji4@jhu.edu)      ##
 ######################################################
 library(shiny)
-library(d3heatmap)
 library(GenomicAlignments)
 library(ggplot2)
 library(reshape2)
@@ -74,7 +73,7 @@ shinyServer(function(input, output,session) {
                                                 Maindata$Rawbampairtf[[name]] <- "single-end"
                                           }
                                           if (input$Inputblacklist) {
-                                                tmp <- tmp[-findOverlaps(tmp,gr)@queryHits,]                                                      
+                                                tmp <- tmp[-findOverlaps(tmp,gr)@from,]                                                      
                                           }
                                           Maindata$Rawbamfile[[name]] <- tmp
                                     }
@@ -681,7 +680,7 @@ shinyServer(function(input, output,session) {
                   if (!input$Sampcluplotshowlabtf) {
                         lab <- NULL
                   }
-                  scatterD3(x = drawdata$x, y = drawdata$y, col_lab = "Cluster", col_var = drawdata$Cluster, lab = lab, xlab = input$Sampcluplotselectfeat[1], ylab = input$Sampcluplotselectfeat[2], transitions = TRUE)         
+                  scatterD3(x = drawdata$x, y = drawdata$y, col_lab = "Cluster", col_var = drawdata$Cluster, lab = lab, xlab = input$Sampcluplotselectfeat[1], ylab = input$Sampcluplotselectfeat[2], transitions = TRUE)      
             }
       })
       
@@ -818,14 +817,14 @@ shinyServer(function(input, output,session) {
             }
       })
       
-      output$Sampbulkcorheatmap <- d3heatmap::renderD3heatmap({
+      output$Sampbulkcorheatmap <- renderPlot({
             if (!is.null(Maindata$bulkcorres)) {
                   tmp <- Maindata$bulkcorres
                   if (input$Sampbulkcorplotstdtf) {
                         tmp <- t(apply(tmp,1,scale))
                   }
                   dimnames(tmp) <- dimnames(Maindata$bulkcorres)
-                  d3heatmap::d3heatmap(tmp,color=colorRampPalette(c("blue", "red"))(100))
+                  heatmap.2(tmp,col=colorRampPalette(c("blue", "red"))(100),trace="none")
             }
       })
       

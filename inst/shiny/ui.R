@@ -6,9 +6,6 @@
 ##       Maintainer:Zhicheng Ji (zji4@jhu.edu)      ##
 ######################################################
 
-library(shiny)
-library(scatterD3)
-
 shinyUI(      
       navbarPage("SCRAT",
                  
@@ -218,15 +215,13 @@ shinyUI(
                                                                                        uiOutput("Sampselectfeatincludebulkui")),
                                                                       uiOutput("Sampcluplotdim2optionui")
                                                                 ),
-                                                                conditionalPanel("input.Sampcluplotselectfeat.length==2",
-                                                                                 scatterD3::scatterD3Output("Sampcluplotdim2",width="700px",height="500px")      
+                                                                conditionalPanel(condition="typeof input.Sampcluplotselectfeat !== 'undefined' && input.Sampcluplotselectfeat !== null && input.Sampcluplotselectfeat.length==2",
+                                                                                 scatterD3::scatterD3Output("Sampcluplotdim2",width="700px",height="500px")),
+                                                                conditionalPanel(condition="typeof input.Sampcluplotselectfeat !== 'undefined' && input.Sampcluplotselectfeat !== null && input.Sampcluplotselectfeat.length==1",
+                                                                                  plotOutput("Sampcluplotdim1",width="600px",height="500px")),
+                                                                conditionalPanel(condition="typeof input.Sampcluplotselectfeat !== 'undefined' && input.Sampcluplotselectfeat !== null && input.Sampcluplotselectfeat.length>2",
+                                                                                  plotOutput("Sampcluplotdim3",width="500px",height="2000px"))
                                                                 ),
-                                                                conditionalPanel("input.Sampcluplotselectfeat.length==1",
-                                                                                 plotOutput("Sampcluplotdim1",width="600px",height="500px")
-                                                                ),
-                                                                conditionalPanel("input.Sampcluplotselectfeat.length > 2",
-                                                                                 plotOutput("Sampcluplotdim3",width="500px",height="2000px")
-                                                                )),
                                                        tabPanel("Clustering Diagnosis",
                                                                 textInput("Sampclucludiagsimnum","Number of simulations","1000"),
                                                                 actionButton("Sampclucludiagrun","Run simulations to diagnose clustering results."),
@@ -238,7 +233,7 @@ shinyUI(
                                 ),
                                 conditionalPanel(condition="input.Sampmainmet=='Bulk'",
                                                  tabsetPanel(
-                                                       tabPanel("Heatmap",br(),checkboxInput("Sampbulkcorplotstdtf","Standardize each row to have zero mean and unit variance",value=T),downloadButton("Sampbulkcorplotdownload"),d3heatmap::d3heatmapOutput("Sampbulkcorheatmap"),width="500px",height="500px"),
+                                                       tabPanel("Heatmap",br(),checkboxInput("Sampbulkcorplotstdtf","Standardize each row to have zero mean and unit variance",value=T),downloadButton("Sampbulkcorplotdownload"),plotOutput("Sampbulkcorheatmap"),width="500px",height="500px"),
                                                        tabPanel("Table",br(),downloadButton("Sampbulkcortabledownload"),DT::dataTableOutput("Sampbulkcortable"))
                                                  )
                                 )
