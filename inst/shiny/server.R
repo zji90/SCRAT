@@ -73,7 +73,12 @@ shinyServer(function(input, output,session) {
                                                 Maindata$Rawbampairtf[[name]] <- "single-end"
                                           }
                                           if (input$Inputblacklist) {
-                                                tmp <- tmp[-findOverlaps(tmp,gr)@from,]                                                      
+                                                overres <- findOverlaps(tmp,gr)
+                                                if ("from" %in% slotNames(overres)) {
+                                                      tmp <- tmp[-overres@from,]                                                            
+                                                } else {
+                                                      tmp <- tmp[-overres@queryHits,]                                                            
+                                                }
                                           }
                                           Maindata$Rawbamfile[[name]] <- tmp
                                     }
