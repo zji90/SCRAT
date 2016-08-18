@@ -421,6 +421,18 @@ shinyServer(function(input, output,session) {
             selectInput("Sampselectfeatincludebulk","Select samples",colnames(ENCODEcount),multiple = T)
       })
       
+      observeEvent(input$Sampselectfeatincludeallbulktf,{
+            datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
+            load(paste0(datapath,"/ENCODE/ENCL1000.rda"))
+            updateSelectInput(session,"Sampselectfeatincludebulk","Select samples",colnames(ENCODEcount),colnames(ENCODEcount))    
+      })
+      
+      observeEvent(input$Sampselectfeatremoveallbulktf,{
+            datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
+            load(paste0(datapath,"/ENCODE/ENCL1000.rda"))
+            updateSelectInput(session,"Sampselectfeatincludebulk","Select samples",colnames(ENCODEcount),NULL)    
+      })
+      
       observe({
             if (input$MainMenu == "Step 3: Cell heterogeneity analysis" && !is.null(Maindata$allsumtable)) {
                   tmp <- Maindata$allsumtable[Maindata$sumtablenametype %in% input$Sampselectfeattype,,drop=F]
