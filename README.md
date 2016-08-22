@@ -15,7 +15,7 @@ devtools::install_github("SCRATdatamm10","zji90")
 devtools::install_github("SCRATdatamm9","zji90")
 ```
 
-To install the latest version of SCRAT package via Github, run following commands in R:
+To install the latest version of SCRAT package via Github, run following commands in R (For Windows users, if the installation fails please use R version 3.2.x):
 ```{r }
 ## try http:// if https:// URLs are not supported
 source("https://bioconductor.org/biocLite.R")
