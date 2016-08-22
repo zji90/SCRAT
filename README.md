@@ -33,6 +33,10 @@ SCRATui()
 
 SCRAT is also available online at https://zhiji.shinyapps.io/scrat/
 
+### SCRAT User Manual
+
+SCRAT user manual is available on Github: https://github.com/zji90/SCRATdata/blob/master/manual.pdf
+
 ## Contact the Author
 Author: Zhicheng Ji, Weiqiang Zhou, Hongkai Ji
 
