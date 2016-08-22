@@ -37,6 +37,10 @@ SCRAT is also available online at https://zhiji.shinyapps.io/scrat/
 
 SCRAT user manual is available on Github: https://github.com/zji90/SCRATdata/blob/master/manual.pdf
 
+## SCRAT Example Data
+
+SCRAT example data from GM12878 and HEK293T single-cell ATAC-seq are available on Github: https://github.com/zji90/SCRATdata
+
 ## Contact the Author
 Author: Zhicheng Ji, Weiqiang Zhou, Hongkai Ji
 
