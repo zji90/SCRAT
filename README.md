@@ -19,11 +19,8 @@ devtools::install_github("SCRATdatamm10","zji90")
 devtools::install_github("SCRATdatamm9","zji90")
 ```
 
-To install the latest version of SCRAT package via Github, run following commands in R (the lastest version of R is recommended):
+To install the latest version of SCRAT package via Github, run following commands in R (R version 3.2.5 and up is recommended. See Q & A if you still want to install SCRAT on older version of R):
 ```{r }
-## try http:// if https:// URLs are not supported
-source("https://bioconductor.org/biocLite.R")
-biocLite("GenomicAlignments")
 source("https://raw.githubusercontent.com/zji90/SCRATdata/master/installcode.R")
 ```
 To launch user interface after installation, run following commands in R:
@@ -40,11 +37,28 @@ SCRAT user manual is available on Github: https://github.com/zji90/SCRATdata/blo
 
 SCRAT example data from GM12878 and HEK293T single-cell ATAC-seq are available on Github: https://github.com/zji90/SCRATdata
 
-## Q an A
+## Q & A
 
-Why SCRAT installation fails on my computer?
+How to install SCRAT with older versions of R (older than 3.2.5)
 
-If both 32-bit and 64-bit R are installed on your computer, it is possible that SCRAT fails to be installed. In this case please uninstall the 32-bit R and only keep the 64-bit R and then try installing SCRAT again.
+Since older version of R does not support https connection, please use the following commands:
+
+```{r }
+source("http://bioconductor.org/biocLite.R")
+biocLite("GenomicAlignments")
+if(!require("shiny")) install.packages("shiny",dependencies=T)
+if(!require("ggplot2")) install.packages("ggplot2",dependencies=T)
+if(!require("reshape2")) install.packages("reshape2",dependencies=T)
+if(!require("gplots")) install.packages("gplots",dependencies=T)
+if(!require("pheatmap")) install.packages("pheatmap",dependencies=T)
+if(!require("scatterD3")) install.packages("scatterD3",dependencies=T)
+if(!require("DT")) install.packages("DT",dependencies=T)
+if(!require("mclust")) install.packages("mclust",dependencies=T)
+if(!require("tsne")) install.packages("tsne",dependencies=T)
+if(!require("devtools")) install.packages("devtools",dependencies=T)
+if(!require("png")) install.packages("png",dependencies=T)
+devtools::install_github("zji90/SCRAT")
+```
 
 ## Contact the Author
 Author: Zhicheng Ji, Weiqiang Zhou, Hongkai Ji
