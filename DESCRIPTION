@@ -17,7 +17,6 @@ Imports:
     reshape2,
     pheatmap,
     scatterD3,
-    d3heatmap,
     DT,
     gplots,
     mclust,
