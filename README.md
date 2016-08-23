@@ -20,9 +20,7 @@ To install the latest version of SCRAT package via Github, run following command
 ## try http:// if https:// URLs are not supported
 source("https://bioconductor.org/biocLite.R")
 biocLite("GenomicAlignments")
-for (pkg in c("shiny","ggplot2","reshape2","pheatmap","scatterD3","DT","gplots","mclust","tsne","devtools"))
-      if (!require(pkg,character.only=T)) install.packages(pkg,dependencies=T)
-devtools::install_github("zji90/SCRAT")
+source("https://raw.githubusercontent.com/zji90/SCRATdata/master/installcode.R")
 ```
 To launch user interface after installation, run following commands in R:
 ```{r }
