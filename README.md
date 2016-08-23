@@ -1,6 +1,10 @@
 SCRAT: Single-Cell Regulome Analysis Tool
 ====
 
+## SCRAT Online User Interface
+
+SCRAT is also available online at https://zhiji.shinyapps.io/scrat/
+
 ## SCRAT Installation
 
 SCRAT software can be installed via Github.
@@ -15,7 +19,7 @@ devtools::install_github("SCRATdatamm10","zji90")
 devtools::install_github("SCRATdatamm9","zji90")
 ```
 
-To install the latest version of SCRAT package via Github, run following commands in R:
+To install the latest version of SCRAT package via Github, run following commands in R (the lastest version of R is recommended):
 ```{r }
 ## try http:// if https:// URLs are not supported
 source("https://bioconductor.org/biocLite.R")
@@ -27,10 +31,6 @@ To launch user interface after installation, run following commands in R:
 library(SCRAT)
 SCRATui()
 ```
-
-## SCRAT Online User Interface
-
-SCRAT is also available online at https://zhiji.shinyapps.io/scrat/
 
 ## SCRAT User Manual
 
