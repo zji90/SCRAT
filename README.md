@@ -19,7 +19,7 @@ devtools::install_github("SCRATdatamm10","zji90")
 devtools::install_github("SCRATdatamm9","zji90")
 ```
 
-To install the latest version of SCRAT package via Github, run following commands in R (R version 3.2.5 and up is recommended. See Q & A if you still want to install SCRAT on older version of R):
+To install the latest version of SCRAT package via Github, run following commands in R (R version 3.2.5 and up is recommended. See Q & A if you want to install SCRAT on older version of R):
 ```{r }
 source("https://raw.githubusercontent.com/zji90/SCRATdata/master/installcode.R")
 ```
@@ -39,10 +39,16 @@ SCRAT example data from GM12878 and HEK293T single-cell ATAC-seq are available o
 
 ## Q & A
 
-How to install SCRAT with older versions of R (older than 3.2.5)
+How to install SCRAT with older versions of R (e.g., R 3.1.3)
 
-Since older version of R does not support https connection, please use the following commands:
+Older version of R does not support https connection. 
 
+To install the SCRAT package, instead of using:
+```{r }
+source("https://raw.githubusercontent.com/zji90/SCRATdata/master/installcode.R")
+```
+
+Please use the following commands:
 ```{r }
 source("http://bioconductor.org/biocLite.R")
 biocLite("GenomicAlignments")
