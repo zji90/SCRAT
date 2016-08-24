@@ -41,9 +41,7 @@ SCRAT example data from GM12878 and HEK293T single-cell ATAC-seq are available o
 
 How to install SCRAT with older versions of R (e.g., R 3.1.3)
 
-Older version of R does not support https connection. 
-
-To install the SCRAT package, instead of using:
+Since older version of R does not support https connection, to install the SCRAT package, instead of using:
 ```{r }
 source("https://raw.githubusercontent.com/zji90/SCRATdata/master/installcode.R")
 ```
