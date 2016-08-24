@@ -19,7 +19,7 @@ devtools::install_github("SCRATdatamm10","zji90")
 devtools::install_github("SCRATdatamm9","zji90")
 ```
 
-To install the latest version of SCRAT package via Github, run following commands in R (R version 3.2.5 and up is recommended. See Q & A if you want to install SCRAT on older version of R):
+To install the latest version of SCRAT package via Github, run following commands in R (R version 3.2.5 and up is recommended. See Q & A if you want to install SCRAT on an older version of R):
 ```{r }
 source("https://raw.githubusercontent.com/zji90/SCRATdata/master/installcode.R")
 ```
