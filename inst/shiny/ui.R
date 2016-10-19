@@ -66,7 +66,7 @@ shinyUI(
                                 ),
                                 conditionalPanel(condition="input.Sumuploadsumtable==0",
                                                  wellPanel(
-                                                       checkboxGroupInput("Sumselectmet","Choose Summarizing Method",list("ENCODE Cluster"="ENCL","Motif Sites"="MOTIF","GSEA Gene Sets"="GSEA","Upload BED"="Upload"),selected=c("ENCL","MOTIF","GSEA")),
+                                                       checkboxGroupInput("Sumselectmet","Choose Summarizing Method",list("Gene Region"="generegion","ENCODE Cluster"="ENCL","Motif Sites"="MOTIF","GSEA Gene Sets"="GSEA","Upload BED"="Upload"),selected=c("ENCL","MOTIF","GSEA")),
                                                        hr(),
                                                        checkboxInput("Sumlogtf","Log2 transformation",value=T),
                                                        checkboxInput("Sumaddcv","Add coefficient of variation (sd/mean) information",value=T),
@@ -80,16 +80,18 @@ shinyUI(
                                                        actionButton("Sumrunbutton","Run Summarization")
                                                  ),                        
                                                  wellPanel(
-                                                       selectInput("Sumdetailchoose","Method Details",list("ENCODE Cluster"="ENCL","Motif Sites"="MOTIF","GSEA Gene Sets"="GSEA","Upload BED"="Upload")),
-                                                       # conditionalPanel(condition="input.Sumdetailchoose=='TSS'",
-                                                       #                  helpText('For each gene, sum all reads overlapping TSS upstream and downstream region. For gene with ENTREZ id of 18999, the feature name will be GENE:18999'),
-                                                       #                  textInput("SumTSSupregionbp","TSS upstream base pair","1000"),
-                                                       #                  textInput("SumTSSdownregionbp","TSS downstream base pair","500")
-                                                       # ),
-                                                       #                                       conditionalPanel(condition="input.Sumdetailchoose=='ENLO'",
-                                                       #                                                        helpText('200 bp windows of genomic loci that are potential regulatory elements were precompiled based on ENCODE DNase-seq data.'),
-                                                       #                                                        checkboxInput("SumENLOreducetf","Merge adjacent windows",value=F)
-                                                       #                                       ),
+                                                       selectInput("Sumdetailchoose","Method Details",list("Gene Region"="generegion","ENCODE Cluster"="ENCL","Motif Sites"="MOTIF","GSEA Gene Sets"="GSEA","Upload BED"="Upload")),
+                                                       conditionalPanel(condition="input.Sumdetailchoose=='generegion'",
+                                                                        helpText('For each gene, sum all reads overlapping upstream or downstream region of gene Transcription Start Site (TSS) or Transcription End Site (TES). SCRAT will automatically switch start and end sites if end site is ahead of start site. For gene with ENTREZ id of 18999, the feature name will be GENE:18999'),
+                                                                        selectInput("Sumgeneregionstarttype","Start site type",list("TSS upstream"="TSSup","TSS downstream"="TSSdown","TES upstream"="TESup","TES downstream"="TESdown")),
+                                                                        textInput("Sumgeneregionstartbp","Start site basepair","1000"),
+                                                                        selectInput("Sumgeneregionendtype","End site type",list("TSS upstream"="TSSup","TSS downstream"="TSSdown","TES upstream"="TESup","TES downstream"="TESdown"),selected = "TSSdown"),
+                                                                        textInput("Sumgeneregionendtbp","End site basepair","500")
+                                                       ),
+                                                                                             conditionalPanel(condition="input.Sumdetailchoose=='ENLO'",
+                                                                                                              helpText('200 bp windows of genomic loci that are potential regulatory elements were precompiled based on ENCODE DNase-seq data.'),
+                                                                                                              checkboxInput("SumENLOreducetf","Merge adjacent windows",value=F)
+                                                                                             ),
                                                        conditionalPanel(condition="input.Sumdetailchoose=='ENCL'",
                                                                         helpText('Clusters of genomic regions (1000,2000 or 5000 clusters) were precompiled based on ENCODE DNase-seq data. For each cluster, sum all reads overlapping any of its genomic regions. For cluster id 1, the feature name will be ENCL1000:Cluster1'),
                                                                         radioButtons("SumENCLclunum","Choose number of clusters",c("1000","2000","5000"),"2000")

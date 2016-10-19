@@ -192,23 +192,43 @@ shinyServer(function(input, output,session) {
                         if (length(input$Sumselectmet) > 0) {
                               allres <- NULL
                               datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
-                              # if ("TSS" %in% input$Sumselectmet) {
-                              #       withProgress(message = 'Counting Overlaps for TSS',{
-                              #             load(paste0(datapath,"/gr/generegion.rda"))
-                              #             gr <- promoters(resize(gr,1),as.numeric(input$SumTSSupregionbp),as.numeric(input$SumTSSdownregionbp))
-                              #             tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
-                              #             tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * 10000
-                              #             if (input$Sumlogtf) {
-                              #                   tmp <- log2(tmp + 1)
-                              #             }
-                              #             if (input$Sumfiltertf) {
-                              #                   tmp <- tmp[rowMeans(tmp < as.numeric(input$Sumfilterreads)) < as.numeric(input$Sumfilterpercen)/100,,drop=F]
-                              #                   cv <- apply(tmp,1,function(i) sd(i)/mean(i))
-                              #                   tmp <- tmp[cv >= as.numeric(input$Sumfiltercv),,drop=F]
-                              #             }
-                              #             allres <- rbind(allres,tmp)
-                              #       })
-                              # }
+                              if ("generegion" %in% input$Sumselectmet) {
+                                    withProgress(message = 'Counting Overlaps for generegion',{
+                                          load(paste0(datapath,"/gr/generegion.rda"))
+                                          if (input$Sumgeneregionstarttype == "TSSup") {
+                                                grstart <- ifelse(as.character(strand(gr))=="+",start(gr)-as.numeric(input$Sumgeneregionstartbp),end(gr)+as.numeric(input$Sumgeneregionstartbp))
+                                          } else if (input$Sumgeneregionstarttype == "TSSdown") {
+                                                grstart <- ifelse(as.character(strand(gr))=="+",start(gr)+as.numeric(input$Sumgeneregionstartbp),end(gr)-as.numeric(input$Sumgeneregionstartbp))
+                                          } else if (input$Sumgeneregionstarttype == "TESup") {
+                                                grstart <- ifelse(as.character(strand(gr))=="+",end(gr)-as.numeric(input$Sumgeneregionstartbp),start(gr)+as.numeric(input$Sumgeneregionstartbp))
+                                          } else if (input$Sumgeneregionstarttype == "TESdown") {
+                                                grstart <- ifelse(as.character(strand(gr))=="+",end(gr)+as.numeric(input$Sumgeneregionstartbp),start(gr)-as.numeric(input$Sumgeneregionstartbp))
+                                          }
+                                          if (input$Sumgeneregionendtype == "TSSup") {
+                                                grend <- ifelse(as.character(strand(gr))=="+",start(gr)-as.numeric(input$Sumgeneregionendtbp),end(gr)+as.numeric(input$Sumgeneregionendtbp))
+                                          } else if (input$Sumgeneregionendtype == "TSSdown") {
+                                                grend <- ifelse(as.character(strand(gr))=="+",start(gr)+as.numeric(input$Sumgeneregionendtbp),end(gr)-as.numeric(input$Sumgeneregionendtbp))
+                                          } else if (input$Sumgeneregionendtype == "TESup") {
+                                                grend <- ifelse(as.character(strand(gr))=="+",end(gr)-as.numeric(input$Sumgeneregionendtbp),start(gr)+as.numeric(input$Sumgeneregionendtbp))
+                                          } else if (input$Sumgeneregionendtype == "TESdown") {
+                                                grend <- ifelse(as.character(strand(gr))=="+",end(gr)+as.numeric(input$Sumgeneregionendtbp),start(gr)-as.numeric(input$Sumgeneregionendtbp))
+                                          }
+                                          ngr <- names(gr)
+                                          gr <- GRanges(seqnames=seqnames(gr),IRanges(start=pmin(grstart,grend),end=pmax(grstart,grend)))      
+                                          names(gr) <- ngr
+                                          tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
+                                          tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * 10000
+                                          if (input$Sumlogtf) {
+                                                tmp <- log2(tmp + 1)
+                                          }
+                                          if (input$Sumfiltertf) {
+                                                tmp <- tmp[rowMeans(tmp < as.numeric(input$Sumfilterreads)) < as.numeric(input$Sumfilterpercen)/100,,drop=F]
+                                                cv <- apply(tmp,1,function(i) sd(i)/mean(i))
+                                                tmp <- tmp[cv >= as.numeric(input$Sumfiltercv),,drop=F]
+                                          }
+                                          allres <- rbind(allres,tmp)
+                                    })
+                              }
                               if ("ENCL" %in% input$Sumselectmet) {
                                     withProgress(message = 'Counting Overlaps for ENCODE Cluster',{
                                           load(paste0(datapath,"/gr/ENCL",input$SumENCLclunum,".rda"))
@@ -444,10 +464,10 @@ shinyServer(function(input, output,session) {
                         ENCODEcounttable <- NULL
                         datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
                         cortype <- input$Sampselectfeattype
-                        # if ("TSS" %in% cortype) {
-                        #       load(paste0(datapath,"/ENCODE/generegion.rda"))
-                        #       ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),input$Sampselectfeatincludebulk,drop=F])
-                        # }
+                        if ("generegion" %in% cortype) {
+                              load(paste0(datapath,"/ENCODE/generegion.rda"))
+                              ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),input$Sampselectfeatincludebulk,drop=F])
+                        }
                         if (sum(grepl("ENCL",cortype))==1) {
                               load(paste0(datapath,"/ENCODE/",cortype[grep("ENCL",cortype)],".rda"))
                               ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),input$Sampselectfeatincludebulk,drop=F])
