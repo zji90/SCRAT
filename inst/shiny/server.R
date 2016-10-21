@@ -326,7 +326,33 @@ shinyServer(function(input, output,session) {
                                     withProgress(message = 'Counting Overlaps for GSEA',{
                                           for (i in input$SumGSEAselect) {
                                                 load(paste0(datapath,"/gr/GSEA",i,".rda"))
-                                                gr <- promoters(resize(gr,1),as.numeric(input$SumGSEAupregionbp),as.numeric(input$SumGSEAdownregionbp))             
+                                                allgr <- gr
+                                                for (sgrn in names(allgr)) {
+                                                      gr <- allgr[[sgrn]]
+                                                      if (input$SumGSEAstarttype == "TSSup") {
+                                                            grstart <- ifelse(as.character(strand(gr))=="+",start(gr)-as.numeric(input$SumGSEAstartbp),end(gr)+as.numeric(input$SumGSEAstartbp))
+                                                      } else if (input$SumGSEAstarttype == "TSSdown") {
+                                                            grstart <- ifelse(as.character(strand(gr))=="+",start(gr)+as.numeric(input$SumGSEAstartbp),end(gr)-as.numeric(input$SumGSEAstartbp))
+                                                      } else if (input$SumGSEAstarttype == "TESup") {
+                                                            grstart <- ifelse(as.character(strand(gr))=="+",end(gr)-as.numeric(input$SumGSEAstartbp),start(gr)+as.numeric(input$SumGSEAstartbp))
+                                                      } else if (input$SumGSEAstarttype == "TESdown") {
+                                                            grstart <- ifelse(as.character(strand(gr))=="+",end(gr)+as.numeric(input$SumGSEAstartbp),start(gr)-as.numeric(input$SumGSEAstartbp))
+                                                      }
+                                                      if (input$SumGSEAendtype == "TSSup") {
+                                                            grend <- ifelse(as.character(strand(gr))=="+",start(gr)-as.numeric(input$SumGSEAendtbp),end(gr)+as.numeric(input$SumGSEAendtbp))
+                                                      } else if (input$SumGSEAendtype == "TSSdown") {
+                                                            grend <- ifelse(as.character(strand(gr))=="+",start(gr)+as.numeric(input$SumGSEAendtbp),end(gr)-as.numeric(input$SumGSEAendtbp))
+                                                      } else if (input$SumGSEAendtype == "TESup") {
+                                                            grend <- ifelse(as.character(strand(gr))=="+",end(gr)-as.numeric(input$SumGSEAendtbp),start(gr)+as.numeric(input$SumGSEAendtbp))
+                                                      } else if (input$SumGSEAendtype == "TESdown") {
+                                                            grend <- ifelse(as.character(strand(gr))=="+",end(gr)+as.numeric(input$SumGSEAendtbp),start(gr)-as.numeric(input$SumGSEAendtbp))
+                                                      }
+                                                      ngr <- names(gr)
+                                                      gr <- GRanges(seqnames=seqnames(gr),IRanges(start=pmin(grstart,grend),end=pmax(grstart,grend)))      
+                                                      names(gr) <- ngr   
+                                                      allgr[[sgrn]] <- gr
+                                                }
+                                                gr <- allgr
                                                 tmp <- sapply(Maindata$bamfile,function(i) countOverlaps(gr,i))
                                                 tmp <- sweep(tmp,2,Maindata$bamsummary[,2],"/") * 10000
                                                 if (input$Sumlogtf) {
