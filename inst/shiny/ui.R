@@ -66,7 +66,7 @@ shinyUI(
                                 ),
                                 conditionalPanel(condition="input.Sumuploadsumtable==0",
                                                  wellPanel(
-                                                       checkboxGroupInput("Sumselectmet","Choose Summarizing Method",list("Gene Region"="generegion","ENCODE Cluster"="ENCL","Motif Sites"="MOTIF","GSEA Gene Sets"="GSEA","Upload BED"="Upload"),selected=c("ENCL","MOTIF","GSEA")),
+                                                       checkboxGroupInput("Sumselectmet","Choose Summarizing Method",list("Gene Region"="generegion","ENCODE Cluster"="ENCL","Motif Sites"="MOTIF","GSEA Gene Sets"="GSEA","Upload BED"="Upload"),selected=c("generegion","ENCL","MOTIF","GSEA")),
                                                        hr(),
                                                        checkboxInput("Sumlogtf","Log2 transformation",value=T),
                                                        checkboxInput("Sumaddcv","Add coefficient of variation (sd/mean) information",value=T),
@@ -84,9 +84,9 @@ shinyUI(
                                                        conditionalPanel(condition="input.Sumdetailchoose=='generegion'",
                                                                         helpText('For each gene, sum all reads overlapping upstream or downstream region of gene Transcription Start Site (TSS) or Transcription End Site (TES). SCRAT will automatically switch start and end sites if end site is ahead of start site. For gene with name of SOX2 and ENSEMBL id of ENSG00000181449.2, the feature name will be generegion:ENSG00000181449.2:SOX2'),
                                                                         selectInput("Sumgeneregionstarttype","Start site type",list("TSS upstream"="TSSup","TSS downstream"="TSSdown","TES upstream"="TESup","TES downstream"="TESdown")),
-                                                                        textInput("Sumgeneregionstartbp","Start site basepair","1000"),
-                                                                        selectInput("Sumgeneregionendtype","End site type",list("TSS upstream"="TSSup","TSS downstream"="TSSdown","TES upstream"="TESup","TES downstream"="TESdown"),selected = "TSSdown"),
-                                                                        textInput("Sumgeneregionendtbp","End site basepair","500")
+                                                                        textInput("Sumgeneregionstartbp","Start site basepair","3000"),
+                                                                        selectInput("Sumgeneregionendtype","End site type",list("TSS downstream"="TSSdown","TSS upstream"="TSSup","TES upstream"="TESup","TES downstream"="TESdown"),selected = "TSSdown"),
+                                                                        textInput("Sumgeneregionendtbp","End site basepair","1000")
                                                        ),
                                                                                              conditionalPanel(condition="input.Sumdetailchoose=='ENLO'",
                                                                                                               helpText('200 bp windows of genomic loci that are potential regulatory elements were precompiled based on ENCODE DNase-seq data.'),
@@ -177,7 +177,7 @@ shinyUI(
                                                        conditionalPanel(condition="(input.Sampcludimredmet=='PCA' && input.Sampcluoptdimnum==0)||input.Sampcludimredmet=='tSNE'",textInput("Sampcluchoosedimnum","Choose number of dimensions",2)),
                                                        
                                                        hr(),
-                                                       radioButtons("Sampcluclumet","Clustering method",list("Hierarchical Clustering"="hclust","K-means"="kmeans","Model-Based Clustering (mclust)"="mclust","Upload"="Upload")),
+                                                       radioButtons("Sampcluclumet","Clustering method",list("Model-Based Clustering (mclust)"="mclust","Hierarchical Clustering"="hclust","K-means"="kmeans","Upload"="Upload")),
                                                        conditionalPanel(condition="input.Sampcluclumet!='Sample'",
                                                                         checkboxInput("Sampcluoptclunum","Automatically choose optimal number of clusters",value = T),
                                                                         conditionalPanel(condition="input.Sampcluoptclunum==0",textInput("Sampcluchooseclunum","Choose number of clusters",2))
