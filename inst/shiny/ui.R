@@ -214,11 +214,11 @@ shinyUI(
                                                                 wellPanel(
                                                                       checkboxInput("Sampcluplotorifeattf","Plot original features",value=F),
                                                                       uiOutput("Sampcluplotselectfeatui"),
-                                                                      conditionalPanel(condition="input.Sampcludimredmet=='PCA'",checkboxInput("Sampselectfeatincludebulktf","Select bulk cell types")),
+                                                                      conditionalPanel(condition="input.Sampcludimredmet=='PCA'",checkboxInput("Sampselectfeatincludebulktf","Include existing cell types")),
                                                                       conditionalPanel(condition="input.Sampselectfeatincludebulktf==1",
                                                                                        uiOutput("Sampselectfeatincludebulkui"),
-                                                                                       actionButton("Sampselectfeatincludeallbulktf","Include all bulk cell types"),
-                                                                                       actionButton("Sampselectfeatremoveallbulktf","Remove all bulk cell types")),
+                                                                                       actionButton("Sampselectfeatincludeallbulktf","Include all existing cell types"),
+                                                                                       actionButton("Sampselectfeatremoveallbulktf","Remove all existing cell types")),
                                                                       uiOutput("Sampcluplotdim2optionui")
                                                                 ),
                                                                 conditionalPanel(condition="typeof input.Sampcluplotselectfeat !== 'undefined' && input.Sampcluplotselectfeat !== null && input.Sampcluplotselectfeat.length==2",
