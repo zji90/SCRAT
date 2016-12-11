@@ -192,8 +192,8 @@ shinyServer(function(input, output,session) {
                         if (length(input$Sumselectmet) > 0) {
                               allres <- NULL
                               datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
-                              if ("generegion" %in% input$Sumselectmet) {
-                                    withProgress(message = 'Counting Overlaps for generegion',{
+                              if ("GENE" %in% input$Sumselectmet) {
+                                    withProgress(message = 'Counting Overlaps for Gene Region',{
                                           load(paste0(datapath,"/gr/generegion.rda"))
                                           if (input$Sumgeneregionstarttype == "TSSup") {
                                                 grstart <- ifelse(as.character(strand(gr))=="+",start(gr)-as.numeric(input$Sumgeneregionstartbp),end(gr)+as.numeric(input$Sumgeneregionstartbp))
@@ -490,9 +490,8 @@ shinyServer(function(input, output,session) {
                         ENCODEcounttable <- NULL
                         datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
                         cortype <- input$Sampselectfeattype
-                        if ("generegion" %in% cortype) {
+                        if ("GENE" %in% cortype) {
                               load(paste0(datapath,"/ENCODE/generegion.rda"))
-                              row.names(ENCODEcount) <- sub("^TSS","generegion",row.names(ENCODEcount))
                               ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),input$Sampselectfeatincludebulk,drop=F])
                         }
                         if (sum(grepl("ENCL",cortype))==1) {
@@ -836,9 +835,8 @@ shinyServer(function(input, output,session) {
                               ENCODEcounttable <- NULL
                               datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
                               cortype <- input$Sampselectfeattype
-                              if ("generegion" %in% cortype) {
+                              if ("GENE" %in% cortype) {
                                     load(paste0(datapath,"/ENCODE/generegion.rda"))
-                                    row.names(ENCODEcount) <- sub("^TSS","generegion",row.names(ENCODEcount))
                                     ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),])
                               }
                               #                               if ("ENLO" %in% input$Sumselectmet) {
