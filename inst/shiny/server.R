@@ -836,8 +836,9 @@ shinyServer(function(input, output,session) {
                               ENCODEcounttable <- NULL
                               datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
                               cortype <- input$Sampselectfeattype
-                              if ("TSS" %in% cortype) {
+                              if ("generegion" %in% cortype) {
                                     load(paste0(datapath,"/ENCODE/generegion.rda"))
+                                    row.names(ENCODEcount) <- sub("^TSS","generegion",row.names(ENCODEcount))
                                     ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),])
                               }
                               #                               if ("ENLO" %in% input$Sumselectmet) {
