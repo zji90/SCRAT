@@ -492,6 +492,7 @@ shinyServer(function(input, output,session) {
                         cortype <- input$Sampselectfeattype
                         if ("generegion" %in% cortype) {
                               load(paste0(datapath,"/ENCODE/generegion.rda"))
+                              row.names(ENCODEcount) <- sub("^TSS","generegion",row.names(ENCODEcount))
                               ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),input$Sampselectfeatincludebulk,drop=F])
                         }
                         if (sum(grepl("ENCL",cortype))==1) {
