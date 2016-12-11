@@ -509,10 +509,15 @@ shinyServer(function(input, output,session) {
                         if (input$Sumlogtf) {
                               ENCODEcounttable <- log2(ENCODEcounttable + 1)
                         }
-                        Maindata$ENCODEcounttable <- ENCODEcounttable[row.names(tmp),,drop=F]
+                        intertable <- matrix(0,nrow(tmp),ncol(ENCODEcounttable),dimnames = list(row.names(tmp),colnames(ENCODEcounttable)))
+                        intername <- intersect(row.names(ENCODEcounttable),row.names(tmp))
+                        intertable[intername,] <- ENCODEcounttable[intername,,drop=F]
+                        Maindata$ENCODEcounttable <- intertable
                         if (input$Sampcludimredscale) {
                               tmptable <- apply(Maindata$ENCODEcounttable,2,scale)
                               dimnames(tmptable) <- dimnames(Maindata$ENCODEcounttable)
+                        } else {
+                              tmptable <- Maindata$ENCODEcounttable
                         }
                         tmp <- predict(Maindata$pcares,t(tmptable))[,1:Maindata$pcadim,drop=F]
                         colnames(tmp) <- paste0("PCA",1:ncol(tmp))
