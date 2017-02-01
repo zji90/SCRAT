@@ -1020,7 +1020,7 @@ shinyServer(function(input, output,session) {
       
       output$Featttestaltui <- renderUI({
             if ((input$Featrunallclustertf && length(unique(Maindata$cluster)) == 2) || (!input$Featrunallclustertf && length(input$Featselectcluster) == 2)) {
-                  radioButtons("Featttestalt","Select alternative hypothesis for t test",c("two.sided", "less", "greater"))      
+                  radioButtons("Featttestalt","Select alternative hypothesis type",c("two.sided", "less", "greater"))      
             }
       })
       

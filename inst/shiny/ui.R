@@ -9,11 +9,11 @@
 suppressMessages(library(shinyBS))
 
 shinyUI(      
-      navbarPage("SCRAT",
-                 tabPanel("Intro",
+      navbarPage("",
+                 tabPanel("SCRAT",
                           sidebarPanel(
                                 p(),
-                                width=3
+                                width=2
                           ),
                           mainPanel(br(),
                                     br(),
@@ -34,10 +34,10 @@ shinyUI(
                                     h3("Analysis pipeline"),
                                     img(src='web_version_introduction_pipeline.jpg', width="70%"),
                                     h3("Example"),
-                                    #tags$iframe(style="height:600px; width:100%", src="test.pdf"),
+                                    tags$iframe(style="height:600px; width:100%", src="manual.pdf"),
                                     h3("Manual"),
-                                    p(),
-                                    h3("About"),
+                                    tags$iframe(style="height:600px; width:100%", src="manual.pdf"),
+                                    h3("Contact"),
                                     h5("Author: Zhicheng Ji, Weiqiang Zhou, Hongkai Ji"),
                                     h5("Maintainer: Zhicheng Ji (zji4@jhu.edu)"),
                                     h5("Version: 1.0.0")
@@ -62,10 +62,10 @@ shinyUI(
                                       h5("To upload a summary table from previous SCRAT session, skip this step and go directly to step 2."),
                                       h4("Input Bam Files"),
                                       fileInput('InputFile', 'Choose File', multiple = T, accept = ".bam"),
-                                      actionButton('Inputexamplebam', 'Load Example File'),
-                                      bsAlert('Inputexamplebamalert'),
                                       checkboxInput("Inputblacklist","Filter blacklist",value = T),
-                                      p(actionButton("Inputreadin","Read in"))      
+                                      p(actionButton("Inputreadin","Read in")),
+                                      actionButton('Inputexamplebam', 'Load example data'),
+                                      bsAlert('Inputexamplebamalert')
                                 ),
                                 wellPanel(
                                       h4("Filter Bam Files"),
@@ -98,13 +98,13 @@ shinyUI(
                                                        h4("Input Summary Table"),
                                                        fileInput('SumuploadsumtableFile', 'Choose File', accept = ".txt"),
                                                        p(actionButton("Sumuploadsumtablereadin","Read in")),
-                                                       actionButton('Inputexampletable', 'Load Example File'),
+                                                       actionButton('Inputexampletable', 'Load example data'),
                                                        bsAlert('Inputexampletablealert')
                                                  )
                                 ),
                                 conditionalPanel(condition="input.Sumuploadsumtable==0",
                                                  wellPanel(
-                                                       checkboxGroupInput("Sumselectmet","Choose Summarizing Method",list("Gene"="GENE","ENCODE Cluster"="ENCL","Motif"="MOTIF","Gene Set"="GSEA","Custom Feature"="Upload"),selected=c("GENE","ENCL","MOTIF","GSEA")),
+                                                       checkboxGroupInput("Sumselectmet","Choose Summarizing Method",list("Gene"="GENE","ENCODE Cluster"="ENCL","Motif"="MOTIF","Gene Set"="GSEA","Custom Feature"="Upload"),selected=c("ENCL")),
                                                        hr(),
                                                        checkboxInput("Sumlogtf","Log2 transformation",value=T),
                                                        checkboxInput("Sumaddcv","Add coefficient of variation (sd/mean) information",value=T),
@@ -126,10 +126,6 @@ shinyUI(
                                                                         selectInput("Sumgeneregionendtype","End site type",list("TSS downstream"="TSSdown","TSS upstream"="TSSup","TES upstream"="TESup","TES downstream"="TESdown"),selected = "TSSdown"),
                                                                         textInput("Sumgeneregionendtbp","End site basepair","1000")
                                                        ),
-                                                                                             conditionalPanel(condition="input.Sumdetailchoose=='ENLO'",
-                                                                                                              helpText('200 bp windows of genomic loci that are potential regulatory elements were precompiled based on ENCODE DNase-seq data.'),
-                                                                                                              checkboxInput("SumENLOreducetf","Merge adjacent windows",value=F)
-                                                                                             ),
                                                        conditionalPanel(condition="input.Sumdetailchoose=='ENCL'",
                                                                         helpText('Clusters of genomic regions (1000,2000 or 5000 clusters) were precompiled based on ENCODE DNase-seq data. For each cluster, sum all reads overlapping any of its genomic regions. For cluster id 1, the feature name will be ENCL1000:Cluster1'),
                                                                         radioButtons("SumENCLclunum","Choose number of clusters",c("1000","2000","5000"),"2000")
@@ -144,9 +140,9 @@ shinyUI(
                                                        conditionalPanel(condition="input.Sumdetailchoose=='GSEA'",
                                                                         helpText('For each GSEA gene set, sum all reads overlapping the flanking region of any gene from the gene set. The flanking region for each gene is defined as upstream or downstream region of gene Transcription Start Site (TSS) or Transcription End Site (TES). For GSEA gene set HALLMARK_HYPOXIA, the feature name will be GSEA:HALLMARK_HYPOXIA'),
                                                                         selectInput("SumGSEAstarttype","Start site type",list("TSS upstream"="TSSup","TSS downstream"="TSSdown","TES upstream"="TESup","TES downstream"="TESdown")),
-                                                                        textInput("SumGSEAstartbp","Start site basepair","1000"),
+                                                                        textInput("SumGSEAstartbp","Start site basepair","3000"),
                                                                         selectInput("SumGSEAendtype","End site type",list("TSS upstream"="TSSup","TSS downstream"="TSSdown","TES upstream"="TESup","TES downstream"="TESdown"),selected = "TSSdown"),
-                                                                        textInput("SumGSEAendtbp","End site basepair","500"),
+                                                                        textInput("SumGSEAendtbp","End site basepair","1000"),
                                                                         checkboxGroupInput("SumGSEAselect","Include gene sets from",list("Hallmark gene sets (50 gene sets)"="h.all","Positional gene sets (326 gene sets)"="c1.all","Curated gene sets: chemical and genetic perturbations (3395 gene sets)"="c2.cgp","Curated gene sets: canonical pathways (1330 gene sets)"="c2.cp","Motif gene sets: microRNA targets (221 gene sets)"="c3.mir","Motif gene sets: transcription factor targets (615 gene sets)"="c3.tft","Computational gene sets: cancer gene neighborhoods (427 gene sets)"="c4.cgn","Computational gene sets: cancer modules (431 gene sets)"="c4.cm","GO gene sets: biological process (825 gene sets)"="c5.bp","GO gene sets: cellular component (233 gene sets)"="c5.cc","GO gene sets: molecular function (396 gene sets)"="c5.mf","Oncogenic signatures (189 gene sets)"="c6.all","Immunologic signatures (1910 gene sets)"="c7.all"),selected = c("c5.bp","c5.cc","c5.mf")),
                                                                         helpText(a("Browse GSEA gene sets",href="http://software.broadinstitute.org/gsea/msigdb/genesets.jsp",target="_blank"))
                                                        ),
