@@ -5,16 +5,18 @@
 ##   Author:Zhicheng Ji, Weiqiang Zhou, Hongkai Ji  ##
 ##       Maintainer:Zhicheng Ji (zji4@jhu.edu)      ##
 ######################################################
-library(shiny)
-library(GenomicAlignments)
-library(ggplot2)
-library(reshape2)
-library(gplots)
-library(pheatmap)
-library(scatterD3)
-library(DT)
-library(mclust)
-library(tsne)
+suppressMessages(library(shiny))
+suppressMessages(library(shinyBS))
+suppressMessages(library(GenomicAlignments))
+suppressMessages(library(ggplot2))
+suppressMessages(library(reshape2))
+suppressMessages(library(gplots))
+suppressMessages(library(pheatmap))
+suppressMessages(library(scatterD3))
+suppressMessages(library(DT))
+suppressMessages(library(mclust))
+suppressMessages(library(dbscan))
+suppressMessages(library(tsne))
 
 options(shiny.maxRequestSize=10*1024^10)
 
@@ -87,6 +89,51 @@ shinyServer(function(input, output,session) {
                         }
                   })
             }
+      })
+      
+      observeEvent(input$Inputexamplebam,{
+            if (require("SCRATexample")) {
+                  FileHandle <- data.frame(name=list.files(system.file("extdata/bam",package="SCRATexample")),datapath=list.files(system.file("extdata/bam",package="SCRATexample"),full.names = T),stringsAsFactors = F)
+                  Maindata$Rawbamfile <- list()
+                  Maindata$Rawbampairtf <- list()
+                  filenum <- length(FileHandle$datapath)
+                  if (!is.null(FileHandle)) {
+                        withProgress(message = 'Reading in',detail="0%",{
+                              datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
+                              load(paste0(datapath,"/gr/blacklist.rda"))
+                              for (i in 1:filenum) {
+                                    incProgress(1/filenum,detail=paste0(round(i/filenum*100),"%"))
+                                    name <- FileHandle$name[i]
+                                    bamfile <- BamFile(FileHandle$datapath[i])
+                                    tmpsingle <- readGAlignments(bamfile)
+                                    tmppair <- readGAlignmentPairs(bamfile)
+                                    pairendtf <- testPairedEndBam(bamfile)
+                                    if (pairendtf) {
+                                          tmp <- tmppair
+                                          startpos <- pmin(start(first(tmp)),start(last(tmp)))
+                                          endpos <- pmax(end(first(tmp)),end(last(tmp)))
+                                          tmp <- GRanges(seqnames=seqnames(tmp),IRanges(start=startpos,end=endpos))
+                                          Maindata$Rawbampairtf[[name]] <- "paired-end"
+                                    } else {
+                                          tmp <- GRanges(tmpsingle)            
+                                          Maindata$Rawbampairtf[[name]] <- "single-end"
+                                    }
+                                    if (input$Inputblacklist) {
+                                          overres <- findOverlaps(tmp,gr)
+                                          if ("from" %in% slotNames(overres)) {
+                                                tmp <- tmp[-overres@from,]                                                            
+                                          } else {
+                                                tmp <- tmp[-overres@queryHits,]                                                            
+                                          }
+                                    }
+                                    Maindata$Rawbamfile[[name]] <- tmp
+                              }
+                        })
+                        Maindata$Rawbamlength <- sapply(Maindata$Rawbamfile,length)
+                  }
+            } else {
+                  createAlert(session,"Inputexamplebamalert",content="SCRATexample package not installed yet! Please install the package before using the function. Check: https://github.com/zji90/SCRATexample")
+            }      
       })
       
       observe({
@@ -168,6 +215,20 @@ shinyServer(function(input, output,session) {
                         paste("Uploaded",length(Maindata$uploadgr),"bed files.")     
                   }
             }
+      })
+      
+      observeEvent(input$Inputexampletable,{
+            if (require("SCRATexample")) {
+                  withProgress(message = 'Reading in...',{
+                        FileHandle <- paste0(system.file("extdata/table",package="SCRATexample"),"/SCRAT_summarized_features_GM12878_HEK293T.txt")
+                        tmp <- read.table(FileHandle,sep="\t",header=T,as.is=T,row.names = 1,check.names=FALSE)                                                                        
+                        tmp <- tmp[,colnames(tmp) != "CV"]
+                        Maindata$allsumtable <- as.matrix(tmp)
+                        Maindata$sumtablenametype <- sapply(row.names(Maindata$allsumtable),function(i) strsplit(i,":")[[1]][1])                              
+                  })
+            } else {
+                  createAlert(session,"Inputexampletablealert",content="SCRATexample package not installed yet! Please install the package before using the function. Check: https://github.com/zji90/SCRATexample")
+            }      
       })
       
       observe({
@@ -587,7 +648,7 @@ shinyServer(function(input, output,session) {
                                           Maindata$pcadim <- pcadim
                                     } else if (input$Sampcludimredmet=='tSNE') {
                                           set.seed(12345)
-                                          tmp <- tsne(dist(t(sumtable)),k=as.numeric(input$Sampcluchoosedimnum))
+                                          tmp <- tsne(dist(t(sumtable)),k=as.numeric(input$Sampcluchoosedimnum),perplexity=as.numeric(input$Sampcluchoosetsneperp))
                                           row.names(tmp) <- colnames(sumtable)
                                           colnames(tmp) <- paste0("tSNE",1:ncol(tmp))
                                           Maindata$reducedata <- tmp
@@ -648,6 +709,8 @@ shinyServer(function(input, output,session) {
                                           }
                                           res <- tryCatch(Mclust(Maindata$reducedata,G=clunum,modelNames="VVV",priorControl(functionName="defaultPrior", shrinkage=0.1)),warning=function(w) {}, error=function(e) {})
                                           Maindata$cluster <- tryCatch(apply(res$z,1,which.max),warning=function(w) {}, error=function(e) {})
+                                    } else if (input$Sampcluclumet=="DBSCAN") {
+                                          Maindata$cluster <- dbscan(Maindata$reducedata,eps=as.numeric(input$Sampcluchoosedbscaneps))$cluster
                                     } else {
                                           Maindata$cluster <- Maindata$uploadclulist[match(colnames(Maindata$sumtable),Maindata$uploadclulist[,1]),2]
                                     }
@@ -979,11 +1042,19 @@ shinyServer(function(input, output,session) {
             }
       })
       
+      output$Feattestmethodui <- renderUI({
+            if ((input$Featrunallclustertf && length(unique(Maindata$cluster)) > 2) || (!input$Featrunallclustertf && length(input$Featselectcluster) > 2)) {
+                  radioButtons("Feattestmethod","Select test method",list("ANOVA test"="anovatest","Kruskal-Wallis test (nonparametric)"="kw","Permutation test"="permutation"))
+            } else if ((input$Featrunallclustertf && length(unique(Maindata$cluster)) == 2) || (!input$Featrunallclustertf && length(input$Featselectcluster) == 2)) {
+                  radioButtons("Feattestmethod","Select test method",list("t test"="ttest","wilcoxon test (nonparametric)"="wilcox","Permutation test"="permutation"))
+            }      
+      })
+      
       observe({
             if (input$Featrunbutton > 0) {
                   isolate({
                         if ((input$Featrunallclustertf && length(unique(Maindata$cluster)) > 2) || (!input$Featrunallclustertf && length(input$Featselectcluster) > 2)) {
-                              withProgress(message = 'Performing ANOVA',{
+                              withProgress(message = 'Performing test',{
                                     clu <- Maindata$cluster
                                     tmp <- Maindata$allsumtable[Maindata$sumtablenametype %in% input$Featselectfeattype,,drop=F]
                                     if (nrow(tmp)==0) {
@@ -995,16 +1066,40 @@ shinyServer(function(input, output,session) {
                                           data <- tmp[,clu %in% as.numeric(input$Featselectcluster)]
                                           clu <- clu[clu %in% as.numeric(input$Featselectcluster)]
                                     }
-                                    totalSS <- rowSums((sweep(data,1,rowMeans(data),"-"))^2)
-                                    cluSS <- sapply(unique(clu),function(i) {
-                                          rowSums((sweep(data[,clu==i,drop=F],1,rowMeans(data[,clu==i,drop=F]),"-"))^2)
-                                    })
-                                    Fstat <- ((totalSS-rowSums(cluSS))/(length(unique(clu)) - 1 ))/(rowSums(cluSS)/(ncol(data) - length(unique(clu))))          
-                                    FDR <- p.adjust(pf(Fstat,(length(unique(clu)) - 1 ),(ncol(data) - length(unique(clu))),lower.tail = F),method="fdr")
+                                    if (input$Feattestmethod=="anovatest") {
+                                          totalSS <- rowSums((sweep(data,1,rowMeans(data),"-"))^2)
+                                          cluSS <- sapply(unique(clu),function(i) {
+                                                rowSums((sweep(data[,clu==i,drop=F],1,rowMeans(data[,clu==i,drop=F]),"-"))^2)
+                                          })
+                                          stat <- ((totalSS-rowSums(cluSS))/(length(unique(clu)) - 1 ))/(rowSums(cluSS)/(ncol(data) - length(unique(clu))))
+                                          FDR <- p.adjust(pf(stat,(length(unique(clu)) - 1),(ncol(data) - length(unique(clu))),lower.tail = F),method="fdr")
+                                    } else if (input$Feattestmethod=="kw") {
+                                          res <- t(apply(data,1,function(rowdata) {
+                                                tmp <- kruskal.test(rowdata,clu)
+                                                c(tmp$statistic,tmp$p.value)
+                                          }))
+                                          stat <- res[,1]
+                                          FDR <- p.adjust(res[,2],method="fdr")
+                                    } else if (input$Feattestmethod=="permutation") {
+                                          totalSS <- rowSums((sweep(data,1,rowMeans(data),"-"))^2)
+                                          cluSS <- sapply(unique(clu),function(i) {
+                                                rowSums((sweep(data[,clu==i,drop=F],1,rowMeans(data[,clu==i,drop=F]),"-"))^2)
+                                          })
+                                          stat <- ((totalSS-rowSums(cluSS))/(length(unique(clu)) - 1))/(rowSums(cluSS)/(ncol(data) - length(unique(clu))))
+                                          permustat <- sapply(1:1000,function(id) {
+                                                sampclu <- sample(clu)
+                                                cluSS <- sapply(unique(sampclu),function(i) {
+                                                      rowSums((sweep(data[,sampclu==i,drop=F],1,rowMeans(data[,sampclu==i,drop=F]),"-"))^2)
+                                                })
+                                                ((totalSS-rowSums(cluSS))/(length(unique(clu)) - 1))/(rowSums(cluSS)/(ncol(data) - length(unique(clu))))
+                                          })
+                                          pval <- rowMeans(sweep(permustat,1,stat,"-") > 0)
+                                          FDR <- p.adjust(pval,method="fdr")
+                                    }
                               })  
-                              Maindata$Featres <- data.frame(Feature=row.names(data),Fstatistics=Fstat,FDR=FDR,stringsAsFactors = F)
+                              Maindata$Featres <- data.frame(Feature=row.names(data),statistics=stat,FDR=FDR,stringsAsFactors = F)
                         } else if ((input$Featrunallclustertf && length(unique(Maindata$cluster)) == 2) || (!input$Featrunallclustertf && length(input$Featselectcluster) == 2)) {
-                              withProgress(message = 'Performing t-test',{
+                              withProgress(message = 'Performing test',{
                                     clu <- Maindata$cluster
                                     tmp <- Maindata$allsumtable[Maindata$sumtablenametype %in% input$Featselectfeattype,,drop=F]
                                     if (nrow(tmp)==0) {
@@ -1017,17 +1112,47 @@ shinyServer(function(input, output,session) {
                                           clu <- clu[clu %in% as.numeric(input$Featselectcluster)]
                                     }
                                     uclu <- unique(clu)
+                                    sampmat <- t(sapply(1:1000,function(i) {
+                                          sample(clu)
+                                    }))
                                     res <- t(apply(data,1,function(i) {
                                           if (length(unique(i[clu==uclu[1]]))==1 & length(unique(i[clu==uclu[2]]))==1) {
                                                 c(NA,NA)
                                           } else{
-                                                tmptest <- t.test(i[clu==uclu[1]],i[clu==uclu[2]],alternative = input$Featttestalt,var.equal = T)
-                                                c(tmptest$statistic,tmptest$p.value)      
+                                                if (input$Feattestmethod=="ttest") {
+                                                      tmptest <- t.test(i[clu==uclu[1]],i[clu==uclu[2]],alternative = input$Featttestalt,var.equal = T)      
+                                                      c(tmptest$statistic,tmptest$p.value)      
+                                                } else if (input$Feattestmethod=="wilcox") {
+                                                      tmptest <- wilcox.test(i[clu==uclu[1]],i[clu==uclu[2]],alternative = input$Featttestalt,var.equal = T)
+                                                      c(tmptest$statistic,tmptest$p.value)      
+                                                } else if (input$Feattestmethod=="permutation") {
+                                                      tmptest <- t.test(i[clu==uclu[1]],i[clu==uclu[2]],alternative = input$Featttestalt,var.equal = T)$statistic
+                                                      permut <- sapply(1:1000,function(id) {
+                                                            sampclu <- sampmat[id,]
+                                                            samp1 <- i[sampclu==uclu[1]]
+                                                            samp2 <- i[sampclu==uclu[2]]
+                                                            mean1 <- mean(samp1)
+                                                            mean2 <- mean(samp2)
+                                                            var1 <- var(samp1)
+                                                            var2 <- var(samp2)
+                                                            n1 <- length(samp1)
+                                                            n2 <- length(samp2)
+                                                            (mean1 - mean2)/sqrt((1/n1+1/n2)*((n1-1)*var1+(n2-1)*var2)/(n1+n2-2))
+                                                      })
+                                                      if (input$Featttestalt == "greater") {
+                                                            pval <- mean(tmptest < permut)      
+                                                      } else if (input$Featttestalt == "less") {
+                                                            pval <- mean(tmptest > permut)      
+                                                      } else if (input$Featttestalt == "two.sided") {
+                                                            pval <- mean(abs(tmptest) < abs(permut))      
+                                                      }
+                                                      c(tmptest,pval)      
+                                                }
                                           }
                                     }))
                                     FDR <- p.adjust(res[,2],method="fdr")
                               })  
-                              Maindata$Featres <- data.frame(Feature=row.names(data),tstatistics=res[,1],FDR=FDR,stringsAsFactors = F)
+                              Maindata$Featres <- data.frame(Feature=row.names(data),statistics=res[,1],FDR=FDR,stringsAsFactors = F)
                         }
                   })
             }

@@ -6,9 +6,43 @@
 ##       Maintainer:Zhicheng Ji (zji4@jhu.edu)      ##
 ######################################################
 
+suppressMessages(library(shinyBS))
+
 shinyUI(      
       navbarPage("SCRAT",
-                 
+                 tabPanel("Intro",
+                          sidebarPanel(
+                                p(),
+                                width=3
+                          ),
+                          mainPanel(br(),
+                                    br(),
+                                    hr(),
+                                    h2("SCRAT: Single-Cell Regulome Analysis Toolbox"),
+                                    h3("Overview"),
+                                    p("Emerging single-cell technologies (e.g., single-cell ATAC-seq, DNase-seq or ChIP-seq)
+                                      have made it possible to assay regulome of individual cells. However, single-cell
+                                      regulome data are highly sparse and discrete. Analyzing such data is challenging and
+                                      user-friendly software tools are still lacking. Here, we present SCRAT, a Single-Cell
+                                      Regulome Analysis Toolbox with a graphical user interface, for studying cell
+                                      heterogeneity using single-cell regulome data. SCRAT can be used to conveniently
+                                      summarize regulatory activities according to different features (e.g., gene sets,
+                                      transcription factor binding motif sites, etc.). Using these features, users can identify cell
+                                      subpopulations in a heterogeneous biological sample, infer cell identities of each
+                                      subpopulation, and discover distinguishing features such as gene sets and transcription
+                                      factors that show different activities among subpopulations."),
+                                    h3("Analysis pipeline"),
+                                    img(src='web_version_introduction_pipeline.jpg', width="70%"),
+                                    h3("Example"),
+                                    #tags$iframe(style="height:600px; width:100%", src="test.pdf"),
+                                    h3("Manual"),
+                                    p(),
+                                    h3("About"),
+                                    h5("Author: Zhicheng Ji, Weiqiang Zhou, Hongkai Ji"),
+                                    h5("Maintainer: Zhicheng Ji (zji4@jhu.edu)"),
+                                    h5("Version: 1.0.0")
+                          )
+                 ),
                  tabPanel("Step 1: Data input and preprocessing",
                           tags$head(
                                 tags$style(HTML('#Inputnextstepbutton{font-weight: bold;color:blue}')),
@@ -28,6 +62,8 @@ shinyUI(
                                       h5("To upload a summary table from previous SCRAT session, skip this step and go directly to step 2."),
                                       h4("Input Bam Files"),
                                       fileInput('InputFile', 'Choose File', multiple = T, accept = ".bam"),
+                                      actionButton('Inputexamplebam', 'Load Example File'),
+                                      bsAlert('Inputexamplebamalert'),
                                       checkboxInput("Inputblacklist","Filter blacklist",value = T),
                                       p(actionButton("Inputreadin","Read in"))      
                                 ),
@@ -60,8 +96,10 @@ shinyUI(
                                                  wellPanel(
                                                        h5("The table should be exactly the same saved from previous SCRAT session"),
                                                        h4("Input Summary Table"),
-                                                       fileInput('SumuploadsumtableFile', 'Choose File', accept = ".txt"),                                                       
-                                                       p(actionButton("Sumuploadsumtablereadin","Read in"))      
+                                                       fileInput('SumuploadsumtableFile', 'Choose File', accept = ".txt"),
+                                                       p(actionButton("Sumuploadsumtablereadin","Read in")),
+                                                       actionButton('Inputexampletable', 'Load Example File'),
+                                                       bsAlert('Inputexampletablealert')
                                                  )
                                 ),
                                 conditionalPanel(condition="input.Sumuploadsumtable==0",
@@ -175,12 +213,15 @@ shinyUI(
                                                                         checkboxInput("Sampcluoptdimnum","Automatically choose optimal number of dimensions",value=T)
                                                        ),
                                                        conditionalPanel(condition="(input.Sampcludimredmet=='PCA' && input.Sampcluoptdimnum==0)||input.Sampcludimredmet=='tSNE'",textInput("Sampcluchoosedimnum","Choose number of dimensions",2)),
-                                                       
+                                                       conditionalPanel(condition="input.Sampcludimredmet=='tSNE'",textInput("Sampcluchoosetsneperp","Set Perplexity",30)),
                                                        hr(),
-                                                       radioButtons("Sampcluclumet","Clustering method",list("Model-Based Clustering (mclust)"="mclust","Hierarchical Clustering"="hclust","K-means"="kmeans","Upload"="Upload")),
-                                                       conditionalPanel(condition="input.Sampcluclumet!='Sample'",
+                                                       radioButtons("Sampcluclumet","Clustering method",list("Model-Based Clustering (mclust)"="mclust","DBSCAN"="DBSCAN","Hierarchical Clustering"="hclust","K-means"="kmeans","Upload"="Upload")),
+                                                       conditionalPanel(condition="input.Sampcluclumet!='Sample'&&input.Sampcluclumet!='DBSCAN'",
                                                                         checkboxInput("Sampcluoptclunum","Automatically choose optimal number of clusters",value = T),
                                                                         conditionalPanel(condition="input.Sampcluoptclunum==0",textInput("Sampcluchooseclunum","Choose number of clusters",2))
+                                                       ),
+                                                       conditionalPanel(condition="input.Sampcluclumet=='DBSCAN'",
+                                                                        textInput("Sampcluchoosedbscaneps","Choose eps",20)
                                                        ),
                                                        conditionalPanel(condition="input.Sampcluclumet=='Upload'",
                                                                         helpText("Upload a file specifying the cluster for each sample."),
@@ -261,6 +302,7 @@ shinyUI(
                                 wellPanel(
                                       checkboxInput("Featrunallclustertf","Perform tests for all clusters",value=T),
                                       conditionalPanel(condition="input.Featrunallclustertf==0",uiOutput("Featselectclusterui")),
+                                      uiOutput("Feattestmethodui"),
                                       uiOutput("Featttestaltui"),
                                       uiOutput("Featttestalttextui"),
                                       actionButton("Featrunbutton","Perform Test")      
@@ -277,16 +319,6 @@ shinyUI(
                                                plotOutput("FeatSumplot")
                                       )                                      
                                 )                                
-                          )
-                 ),
-                 tabPanel("About",
-                          mainPanel(br(),
-                                    br(),
-                                    hr(),
-                                    h4("SCRAT: Single-Cell Regulome Analysis Tool"),
-                                    h5("Author: Zhicheng Ji, Weiqiang Zhou, Hongkai Ji"),
-                                    h5("Maintainer: Zhicheng Ji (zji4@jhu.edu)"),
-                                    h5("Version: 0.99.1")
                           )
                  )
                  ,id="MainMenu",position = "fixed-top",inverse=T)
