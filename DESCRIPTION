@@ -12,6 +12,7 @@ Description: SCRAT provides essential tools for users to read in single-cell
 License: GPL(>=2)
 Imports:
     shiny,
+    shinyBS,
     GenomicAlignments,
     ggplot2,
     reshape2,
@@ -20,6 +21,7 @@ Imports:
     DT,
     gplots,
     mclust,
+    dbscan,
     tsne
 VignetteBuilder: knitr
 Suggests:
