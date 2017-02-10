@@ -710,7 +710,18 @@ shinyServer(function(input, output,session) {
                                           res <- tryCatch(Mclust(Maindata$reducedata,G=clunum,modelNames="VVV",priorControl(functionName="defaultPrior", shrinkage=0.1)),warning=function(w) {}, error=function(e) {})
                                           Maindata$cluster <- tryCatch(apply(res$z,1,which.max),warning=function(w) {}, error=function(e) {})
                                     } else if (input$Sampcluclumet=="DBSCAN") {
-                                          Maindata$cluster <- dbscan(Maindata$reducedata,eps=as.numeric(input$Sampcluchoosedbscaneps))$cluster
+                                          if (input$Sampcludbscanopteps) {
+                                                alldist <- sort(kNNdist(Maindata$reducedata,5))
+                                                x <- 1:length(alldist)
+                                                eps <- alldist[which.min(sapply(x, function(i) {
+                                                      x2 <- pmax(0,x-i)
+                                                      sum(lm(alldist~x+x2)$residuals^2)
+                                                }))]
+                                                createAlert(session,"Sampcludbscanoptepsalert",content=paste0("The selected eps is ",round(eps,5)))
+                                          } else {
+                                                eps <- as.numeric(input$Sampcluchoosedbscaneps)
+                                          }
+                                          Maindata$cluster <- dbscan(Maindata$reducedata,eps=eps)$cluster
                                     } else {
                                           Maindata$cluster <- Maindata$uploadclulist[match(colnames(Maindata$sumtable),Maindata$uploadclulist[,1]),2]
                                     }

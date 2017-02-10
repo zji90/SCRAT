@@ -217,7 +217,9 @@ shinyUI(
                                                                         conditionalPanel(condition="input.Sampcluoptclunum==0",textInput("Sampcluchooseclunum","Choose number of clusters",2))
                                                        ),
                                                        conditionalPanel(condition="input.Sampcluclumet=='DBSCAN'",
-                                                                        textInput("Sampcluchoosedbscaneps","Choose eps",20)
+                                                                        checkboxInput("Sampcludbscanopteps","Automatically choose optimal eps (eps controls the number of clusters)",value = T),
+                                                                        bsAlert("Sampcludbscanoptepsalert"),
+                                                                        conditionalPanel(condition="input.Sampcludbscanopteps==0",textInput("Sampcluchoosedbscaneps","Choose eps",20))
                                                        ),
                                                        conditionalPanel(condition="input.Sampcluclumet=='Upload'",
                                                                         helpText("Upload a file specifying the cluster for each sample."),

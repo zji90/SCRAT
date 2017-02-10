@@ -37,6 +37,13 @@ SCRAT user manual is available on Github: https://github.com/zji90/SCRATdata/blo
 
 SCRAT example data from GM12878 and HEK293T single-cell ATAC-seq are available on Github: https://github.com/zji90/SCRATdata
 
+SCRAT example data can also be directly loaded in SCRAT UI after the SCRAT example data package is installed. To install the SCRAT example data package, please use the following command:
+```{r }
+if (!require("devtools"))
+  install.packages("devtools")
+devtools::install_github("SCRATexample","zji90")
+```
+
 ## Q & A
 
 How to install SCRAT with older versions of R (e.g., R 3.1.3)
