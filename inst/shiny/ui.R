@@ -30,17 +30,19 @@ shinyUI(
                                       transcription factor binding motif sites, etc.). Using these features, users can identify cell
                                       subpopulations in a heterogeneous biological sample, infer cell identities of each
                                       subpopulation, and discover distinguishing features such as gene sets and transcription
-                                      factors that show different activities among subpopulations."),
+                                      factors that show different activities among subpopulations.",style="font-size:20px"),
                                     h3("Analysis pipeline"),
                                     img(src='web_version_introduction_pipeline.jpg', width="70%"),
                                     h3("Example"),
-                                    tags$iframe(style="height:600px; width:100%", src="manual.pdf"),
+                                    p("In the following document, we demonstrated the major functions of SCRAT using a dataset which contains 230 HEK293T cells and 20 GM12878 cells. See the following document for details:",style="font-size:20px"),
+                                    tags$iframe(style="height:600px; width:100%", src="SCRAT_web_version_example.pdf"),
                                     h3("Manual"),
+                                    p("The User Manual of SCRAT provides the details about the various function menus in SCRAT:",style="font-size:20px"),
                                     tags$iframe(style="height:600px; width:100%", src="manual.pdf"),
                                     h3("Contact"),
-                                    h5("Author: Zhicheng Ji, Weiqiang Zhou, Hongkai Ji"),
-                                    h5("Maintainer: Zhicheng Ji (zji4@jhu.edu)"),
-                                    h5("Version: 1.0.0")
+                                    h5("Author: Zhicheng Ji, Weiqiang Zhou, Hongkai Ji",style="font-size:20px"),
+                                    h5("Maintainer: Zhicheng Ji (zji4@jhu.edu)",style="font-size:20px"),
+                                    h5("Version: 1.0.0",style="font-size:20px")
                           )
                  ),
                  tabPanel("Step 1: Data input and preprocessing",
@@ -150,7 +152,7 @@ shinyUI(
                                                                         radioButtons("SumuploadFilemultipletf",NULL,list("Upload One File"="One","Upload Multiple Files"="Multiple")),
                                                                         conditionalPanel(condition="input.SumuploadFilemultipletf=='One'",helpText('Upload BED file to define genomic regions. BED files are tab-delimited files. First column: chromosome name; second column: start site; third column: end site; Optional fourth column: feature id. If the fourth column is missing, then each row will be treated as seperate features. Otherwise rows with same feature id will be pulled together as a single feature.'),
                                                                                          fileInput('SumuploadFile', 'Choose File', accept = ".bed")
-                                                                                         ),
+                                                                        ),
                                                                         conditionalPanel(condition="input.SumuploadFilemultipletf=='Multiple'",helpText('Upload BED file to define genomic regions. BED files are tab-delimited files. First column: chromosome name; second column: start site; third column: end site. Each BED file will be treated as a single feature: all genomic features in one BED file will be pooled together.'),
                                                                                          fileInput('SumuploadFile2', 'Choose Files', accept = ".bed",multiple = T)
                                                                                          
@@ -236,7 +238,7 @@ shinyUI(
                                                        
                                       ),
                                       conditionalPanel(condition="input.Sampmainmet=='Bulk'",
-                                                       checkboxInput("Sampbulkcombinetf","Combine replicates",value=F),
+                                                       checkboxInput("Sampbulkcombinetf","Combine replicates",value=T),
                                                        actionButton("Sampbulkcorrunbutton","Calculate Correlations")              
                                       )
                                 )
@@ -263,10 +265,10 @@ shinyUI(
                                                                 conditionalPanel(condition="typeof input.Sampcluplotselectfeat !== 'undefined' && input.Sampcluplotselectfeat !== null && input.Sampcluplotselectfeat.length==2",
                                                                                  scatterD3::scatterD3Output("Sampcluplotdim2",width="700px",height="500px")),
                                                                 conditionalPanel(condition="typeof input.Sampcluplotselectfeat !== 'undefined' && input.Sampcluplotselectfeat !== null && input.Sampcluplotselectfeat.length==1",
-                                                                                  plotOutput("Sampcluplotdim1",width="600px",height="500px")),
+                                                                                 plotOutput("Sampcluplotdim1",width="600px",height="500px")),
                                                                 conditionalPanel(condition="typeof input.Sampcluplotselectfeat !== 'undefined' && input.Sampcluplotselectfeat !== null && input.Sampcluplotselectfeat.length>2",
-                                                                                  plotOutput("Sampcluplotdim3",width="500px",height="2000px"))
-                                                                ),
+                                                                                 plotOutput("Sampcluplotdim3",width="500px",height="2000px"))
+                                                       ),
                                                        tabPanel("Clustering Diagnosis",
                                                                 textInput("Sampclucludiagsimnum","Number of simulations","1000"),
                                                                 actionButton("Sampclucludiagrun","Run simulations to diagnose clustering results."),
