@@ -912,7 +912,11 @@ shinyServer(function(input, output,session) {
                   isolate({
                         withProgress(message = 'Calculating correlation',{
                               ENCODEcounttable <- NULL
-                              datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
+                              if (is.null(input$InputGenome)) {
+                                    datapath <- system.file("extdata",package=paste0("SCRATdatahg19"))     
+                              } else {
+                                    datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))      
+                              }
                               cortype <- input$Sampselectfeattype
                               if ("GENE" %in% cortype) {
                                     load(paste0(datapath,"/ENCODE/generegion.rda"))
@@ -923,6 +927,7 @@ shinyServer(function(input, output,session) {
                               #                                     ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),])
                               #                               }
                               if (sum(grepl("ENCL",cortype))==1) {
+                                    print(datapath)
                                     load(paste0(datapath,"/ENCODE/",cortype[grep("ENCL",cortype)],".rda"))
                                     ENCODEcounttable <- rbind(ENCODEcounttable,ENCODEcount[row.names(ENCODEcount) %in% row.names(Maindata$sumtable),])
                               }

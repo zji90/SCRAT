@@ -96,7 +96,7 @@ shinyUI(
                                 checkboxInput("Sumuploadsumtable","Upload Summarization Table",value=F),
                                 conditionalPanel(condition="input.Sumuploadsumtable==1",
                                                  wellPanel(
-                                                       h5("The table should be exactly the same saved from previous SCRAT session"),
+                                                       h5("The table should be exactly the same saved from previous SCRAT session. Please do not forget to change the genome on the first page! The default genome is hg19."),
                                                        h4("Input Summary Table"),
                                                        fileInput('SumuploadsumtableFile', 'Choose File', accept = ".txt"),
                                                        p(actionButton("Sumuploadsumtablereadin","Read in")),
@@ -295,7 +295,7 @@ shinyUI(
                           hr(),
                           sidebarPanel(
                                 fluidRow(actionButton("Featpreviousstepbutton","Previous Step"),align="center"),
-                                helpText("Perform ANOVA or t tests to identify key features that mostly explains the between cluster variance. The sample clusters are obtained in step 3."),
+                                helpText("Perform differential tests to identify key features that explains the between cluster variance. The sample clusters are obtained in step 3."),
                                 wellPanel(uiOutput("Featselectfeattypeui"),
                                           helpText("Select feature type to be included in the differential feature analysis. If no feature type is selected, all feature types will be used in the analsysis.")
                                 ),    
