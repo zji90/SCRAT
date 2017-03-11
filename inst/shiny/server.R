@@ -523,19 +523,31 @@ shinyServer(function(input, output,session) {
       })
       
       output$Sampselectfeatincludebulkui <- renderUI({
-            datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
+            if (is.null(input$InputGenome)) {
+                  datapath <- system.file("extdata",package=paste0("SCRATdatahg19"))     
+            } else {
+                  datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))      
+            }
             load(paste0(datapath,"/ENCODE/ENCL1000.rda"))
             selectInput("Sampselectfeatincludebulk","Select samples",colnames(ENCODEcount),multiple = T)
       })
       
       observeEvent(input$Sampselectfeatincludeallbulktf,{
-            datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
+            if (is.null(input$InputGenome)) {
+                  datapath <- system.file("extdata",package=paste0("SCRATdatahg19"))     
+            } else {
+                  datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))      
+            }
             load(paste0(datapath,"/ENCODE/ENCL1000.rda"))
             updateSelectInput(session,"Sampselectfeatincludebulk","Select samples",colnames(ENCODEcount),colnames(ENCODEcount))    
       })
       
       observeEvent(input$Sampselectfeatremoveallbulktf,{
-            datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
+            if (is.null(input$InputGenome)) {
+                  datapath <- system.file("extdata",package=paste0("SCRATdatahg19"))     
+            } else {
+                  datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))      
+            }
             load(paste0(datapath,"/ENCODE/ENCL1000.rda"))
             updateSelectInput(session,"Sampselectfeatincludebulk","Select samples",colnames(ENCODEcount),NULL)    
       })
@@ -549,7 +561,11 @@ shinyServer(function(input, output,session) {
                   Maindata$sumtable <- tmp
                   if (input$Sampselectfeatincludebulktf & length(input$Sampselectfeatincludebulk) > 0) {
                         ENCODEcounttable <- NULL
-                        datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))
+                        if (is.null(input$InputGenome)) {
+                              datapath <- system.file("extdata",package=paste0("SCRATdatahg19"))     
+                        } else {
+                              datapath <- system.file("extdata",package=paste0("SCRATdata",input$InputGenome))      
+                        }
                         cortype <- input$Sampselectfeattype
                         if ("GENE" %in% cortype) {
                               load(paste0(datapath,"/ENCODE/generegion.rda"))
