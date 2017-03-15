@@ -100,7 +100,7 @@ shinyUI(
                                                        h4("Input Summary Table"),
                                                        fileInput('SumuploadsumtableFile', 'Choose File', accept = ".txt"),
                                                        p(actionButton("Sumuploadsumtablereadin","Read in")),
-                                                       actionButton('Inputexampletable', 'Load example data'),
+                                                       actionButton('Inputexampletable', 'Load example summarized features'),
                                                        bsAlert('Inputexampletablealert')
                                                  )
                                 ),
@@ -219,9 +219,10 @@ shinyUI(
                                                                         conditionalPanel(condition="input.Sampcluoptclunum==0",textInput("Sampcluchooseclunum","Choose number of clusters",2))
                                                        ),
                                                        conditionalPanel(condition="input.Sampcluclumet=='DBSCAN'",
-                                                                        checkboxInput("Sampcludbscanopteps","Automatically choose optimal eps (eps controls the number of clusters)",value = T),
+                                                                        checkboxInput("Sampcludbscanopteps","Automatically choose optimal eps (size of the epsilon neighborhood; eps controls the number of clusters)",value = T),
                                                                         bsAlert("Sampcludbscanoptepsalert"),
-                                                                        conditionalPanel(condition="input.Sampcludbscanopteps==0",textInput("Sampcluchoosedbscaneps","Choose eps",20))
+                                                                        conditionalPanel(condition="input.Sampcludbscanopteps==0",textInput("Sampcluchoosedbscaneps","Choose eps",20)),
+                                                                        textInput("SampcluchoosedbscanminPts","Choose number of minimum points in the eps region",5)
                                                        ),
                                                        conditionalPanel(condition="input.Sampcluclumet=='Upload'",
                                                                         helpText("Upload a file specifying the cluster for each sample."),
@@ -303,6 +304,7 @@ shinyUI(
                                       checkboxInput("Featrunallclustertf","Perform tests for all clusters",value=T),
                                       conditionalPanel(condition="input.Featrunallclustertf==0",uiOutput("Featselectclusterui")),
                                       uiOutput("Feattestmethodui"),
+                                      uiOutput("Feattestmethodpermunumui"),
                                       uiOutput("Featttestaltui"),
                                       uiOutput("Featttestalttextui"),
                                       actionButton("Featrunbutton","Perform Test")      
