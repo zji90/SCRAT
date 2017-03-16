@@ -1081,7 +1081,7 @@ shinyServer(function(input, output,session) {
       
       output$Feattestmethodpermunumui <- renderUI({
             if (input$Feattestmethod == "permutation") {
-                  textInput("Feattestmethodpermunumui","Number of permutations",1000)
+                  textInput("Feattestmethodpermunum","Number of permutations",1000)
             }
       })
       
@@ -1121,7 +1121,7 @@ shinyServer(function(input, output,session) {
                                                 rowSums((sweep(data[,clu==i,drop=F],1,rowMeans(data[,clu==i,drop=F]),"-"))^2)
                                           })
                                           stat <- ((totalSS-rowSums(cluSS))/(length(unique(clu)) - 1))/(rowSums(cluSS)/(ncol(data) - length(unique(clu))))
-                                          permustat <- sapply(1:as.numeric(input$Feattestmethodpermunumui),function(id) {
+                                          permustat <- sapply(1:as.numeric(input$Feattestmethodpermunum),function(id) {
                                                 sampclu <- sample(clu)
                                                 cluSS <- sapply(unique(sampclu),function(i) {
                                                       rowSums((sweep(data[,sampclu==i,drop=F],1,rowMeans(data[,sampclu==i,drop=F]),"-"))^2)
@@ -1147,13 +1147,15 @@ shinyServer(function(input, output,session) {
                                           clu <- clu[clu %in% as.numeric(input$Featselectcluster)]
                                     }
                                     uclu <- unique(clu)
-                                    sampmat <- t(sapply(1:as.numeric(input$Feattestmethodpermunumui),function(i) {
-                                          sample(clu)
-                                    }))
+                                    if (input$Feattestmethod=="permutation") {
+                                          sampmat <- t(sapply(1:as.numeric(input$Feattestmethodpermunum),function(i) {
+                                                sample(clu)
+                                          }))
+                                    }
                                     res <- t(apply(data,1,function(i) {
                                           if (length(unique(i[clu==uclu[1]]))==1 & length(unique(i[clu==uclu[2]]))==1) {
                                                 c(NA,NA)
-                                          } else{
+                                          } else {
                                                 if (input$Feattestmethod=="ttest") {
                                                       tmptest <- t.test(i[clu==uclu[1]],i[clu==uclu[2]],alternative = input$Featttestalt,var.equal = T)      
                                                       c(tmptest$statistic,tmptest$p.value)      
@@ -1162,7 +1164,7 @@ shinyServer(function(input, output,session) {
                                                       c(tmptest$statistic,tmptest$p.value)      
                                                 } else if (input$Feattestmethod=="permutation") {
                                                       tmptest <- t.test(i[clu==uclu[1]],i[clu==uclu[2]],alternative = input$Featttestalt,var.equal = T)$statistic
-                                                      permut <- sapply(1:as.numeric(input$Feattestmethodpermunumui),function(id) {
+                                                      permut <- sapply(1:as.numeric(input$Feattestmethodpermunum),function(id) {
                                                             sampclu <- sampmat[id,]
                                                             samp1 <- i[sampclu==uclu[1]]
                                                             samp2 <- i[sampclu==uclu[2]]
