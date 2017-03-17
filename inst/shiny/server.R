@@ -1046,7 +1046,7 @@ shinyServer(function(input, output,session) {
       
       output$Featselectclusterui <- renderUI({
             if (!is.null(Maindata$cluster)) {
-                  selectInput("Featselectcluster","Select clusters where ANOVA or t test will be performed (at least two should be selected)",unique(Maindata$cluster),selected = sort(unique(Maindata$cluster))[1:2],multiple = T)
+                  selectInput("Featselectcluster","Select clusters where differential tests will be performed (at least two should be selected)",unique(Maindata$cluster),selected = sort(unique(Maindata$cluster))[1:2],multiple = T)
             }
       })
       
