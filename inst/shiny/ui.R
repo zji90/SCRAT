@@ -106,7 +106,7 @@ shinyUI(
                                 ),
                                 conditionalPanel(condition="input.Sumuploadsumtable==0",
                                                  wellPanel(
-                                                       checkboxGroupInput("Sumselectmet","Choose Summarizing Method",list("Gene"="GENE","ENCODE Cluster"="ENCL","Motif"="MOTIF","Gene Set"="GSEA","Custom Feature"="Upload"),selected=c("ENCL")),
+                                                       checkboxGroupInput("Sumselectmet","Choose Summarizing Method",list("ENCODE Cluster"="ENCL","Gene"="GENE","Motif"="MOTIF","Gene Set"="GSEA","Custom Feature"="Upload"),selected=c("ENCL")),
                                                        hr(),
                                                        checkboxInput("Sumlogtf","Log2 transformation",value=T),
                                                        checkboxInput("Sumaddcv","Add coefficient of variation (sd/mean) information",value=T),
@@ -120,7 +120,7 @@ shinyUI(
                                                        actionButton("Sumrunbutton","Run Summarization")
                                                  ),                        
                                                  wellPanel(
-                                                       selectInput("Sumdetailchoose","Method Details",list("Gene"="GENE","ENCODE Cluster"="ENCL","Motif"="MOTIF","Gene Set"="GSEA","Custom Feature"="Upload")),
+                                                       selectInput("Sumdetailchoose","Method Details",list("ENCODE Cluster"="ENCL","Gene"="GENE","Motif"="MOTIF","Gene Set"="GSEA","Custom Feature"="Upload")),
                                                        conditionalPanel(condition="input.Sumdetailchoose=='GENE'",
                                                                         helpText('For each gene, sum all reads overlapping upstream or downstream region of gene Transcription Start Site (TSS) or Transcription End Site (TES). SCRAT will automatically switch start and end sites if end site is ahead of start site. For gene with name of SOX2 and ENSEMBL id of ENSG00000181449.2, the feature name will be GENE:ENSG00000181449.2:SOX2'),
                                                                         selectInput("Sumgeneregionstarttype","Start site type",list("TSS upstream"="TSSup","TSS downstream"="TSSdown","TES upstream"="TESup","TES downstream"="TESdown")),
