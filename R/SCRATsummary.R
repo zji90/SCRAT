@@ -3,9 +3,9 @@
 #' Compile SCRAT summary table
 #'
 #' This function will compile a SCRAT summary table from bam files. The results should be the same as run on GUI.
-#' @param dir The folder where the bam files are stored. All bam files within the folder will be analyzed. Only useful when bamfile is NULL.
+#' @param dir The folder where the bam files are stored. If bamfile is NULL, all bam files within the folder will be analyzed.
 #' @param genome The mapped genome of the bam files. Should be one the following: "hg19", "hg38", "mm9", "mm10"
-#' @param bamfile A character vector of the path to bam files. If not NULL, dir will not be used.
+#' @param bamfile A character vector of bam files. If NULL, all files in dir will be included.
 #' @param singlepair Whether the original sequencing files are single-end or paired-end. Should be one of the following: "automated", "single", "pair". Default is "automated" where SCRAT will automatically determine the type.
 #' @param removeblacklist Logical value indicating whether black list regions should be removed.
 #' @param log2transform Logical value indicating whether the read counts should be log2 transformed (after adding pseudo-count of 1).
@@ -29,7 +29,7 @@
 #'    SCRATsummary(dir="bamfiledir",genome="hg19")
 #' }
 
-SCRATsummary <- function(dir,genome,bamfile=NULL,singlepair="automated",removeblacklist=T,log2transform=T,featurelist=c("GENE","ENCL","MOTIF_TRANSFAC","MOTIF_JASPAR","GSEA"),Genestarttype="TSSup",Geneendtype="TSSdown",Genestartbp=3000,Geneendbp=1000,ENCLclunum=2000,Motifflank=100,GSEAterm="c5.bp",GSEAstarttype="TSSup",GSEAendtype="TSSdown",GSEAstartbp=3000,GSEAendbp=1000) {
+SCRATsummary <- function(dir="",genome,bamfile=NULL,singlepair="automated",removeblacklist=T,log2transform=T,featurelist=c("GENE","ENCL","MOTIF_TRANSFAC","MOTIF_JASPAR","GSEA"),Genestarttype="TSSup",Geneendtype="TSSdown",Genestartbp=3000,Geneendbp=1000,ENCLclunum=2000,Motifflank=100,GSEAterm="c5.bp",GSEAstarttype="TSSup",GSEAendtype="TSSdown",GSEAstartbp=3000,GSEAendbp=1000) {
       if (is.null(bamfile)) {
             bamfile <- list.files(dir,pattern = ".bam$")
       }

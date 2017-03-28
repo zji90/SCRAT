@@ -4,7 +4,7 @@
 \alias{SCRATsummary}
 \title{SCRATsummary}
 \usage{
-SCRATsummary(dir, genome, bamfile = NULL, singlepair = "automated",
+SCRATsummary(dir = "", genome, bamfile = NULL, singlepair = "automated",
   removeblacklist = T, log2transform = T, featurelist = c("GENE", "ENCL",
   "MOTIF_TRANSFAC", "MOTIF_JASPAR", "GSEA"), Genestarttype = "TSSup",
   Geneendtype = "TSSdown", Genestartbp = 3000, Geneendbp = 1000,
@@ -13,11 +13,11 @@ SCRATsummary(dir, genome, bamfile = NULL, singlepair = "automated",
   GSEAendbp = 1000)
 }
 \arguments{
-\item{dir}{The folder where the bam files are stored. All bam files within the folder will be analyzed. Only useful when bamfile is NULL.}
+\item{dir}{The folder where the bam files are stored. If bamfile is NULL, all bam files within the folder will be analyzed.}
 
 \item{genome}{The mapped genome of the bam files. Should be one the following: "hg19", "hg38", "mm9", "mm10"}
 
-\item{bamfile}{A character vector of the path to bam files. If not NULL, dir will not be used.}
+\item{bamfile}{A character vector of bam files. If NULL, all files in dir will be included.}
 
 \item{singlepair}{Whether the original sequencing files are single-end or paired-end. Should be one of the following: "automated", "single", "pair". Default is "automated" where SCRAT will automatically determine the type.}
 

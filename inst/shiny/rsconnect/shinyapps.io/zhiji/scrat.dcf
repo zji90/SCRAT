@@ -1,9 +1,10 @@
 name: scrat
+title:
 account: zhiji
 server: shinyapps.io
 appId: 78069
-bundleId: 762271
+bundleId: 766978
 url: https://zhiji.shinyapps.io/scrat/
-when: 1490389847.87849
+when: 1490711868.55458
 asMultiple: FALSE
 asStatic: FALSE
