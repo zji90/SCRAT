@@ -307,6 +307,7 @@ shinyUI(
                                       uiOutput("Feattestmethodpermunumui"),
                                       uiOutput("Featttestaltui"),
                                       uiOutput("Featttestalttextui"),
+                                      checkboxInput("Featstdtf","Standardize Features"),
                                       actionButton("Featrunbutton","Perform Test")      
                                 )
                                 ,width=3),
