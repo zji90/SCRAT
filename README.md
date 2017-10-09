@@ -13,10 +13,10 @@ Users should first install the SCRAT data packages by running following commands
 ```{r }
 if (!require("devtools"))
   install.packages("devtools")
-devtools::install_github("SCRATdatahg19","zji90")
-devtools::install_github("SCRATdatahg38","zji90")
-devtools::install_github("SCRATdatamm10","zji90")
-devtools::install_github("SCRATdatamm9","zji90")
+devtools::install_github("zji90/SCRATdatahg19")
+devtools::install_github("zji90/SCRATdatahg38")
+devtools::install_github("zji90/SCRATdatamm10")
+devtools::install_github("zji90/SCRATdatamm9")
 ```
 
 To install the latest version of SCRAT package via Github, run following commands in R (R version 3.2.5 and up is recommended. See Q & A if you want to install SCRAT on an older version of R):
