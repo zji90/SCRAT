@@ -1101,6 +1101,11 @@ shinyServer(function(input, output,session) {
                                           data <- tmp[,clu %in% as.numeric(input$Featselectcluster)]
                                           clu <- clu[clu %in% as.numeric(input$Featselectcluster)]
                                     }
+                                    if (input$Featstdtf) {
+                                          dm <- dimnames(data)
+                                          data <- apply(data,2,scale)
+                                          dimnames(data) <- dm
+                                    }
                                     if (input$Feattestmethod=="anovatest") {
                                           totalSS <- rowSums((sweep(data,1,rowMeans(data),"-"))^2)
                                           cluSS <- sapply(unique(clu),function(i) {
@@ -1145,6 +1150,11 @@ shinyServer(function(input, output,session) {
                                     } else {
                                           data <- tmp[,clu %in% as.numeric(input$Featselectcluster)]
                                           clu <- clu[clu %in% as.numeric(input$Featselectcluster)]
+                                    }
+                                    if (input$Featstdtf) {
+                                          dm <- dimnames(data)
+                                          data <- apply(data,2,scale)
+                                          dimnames(data) <- dm
                                     }
                                     uclu <- unique(clu)
                                     if (input$Feattestmethod=="permutation") {
