@@ -255,6 +255,7 @@ SCRATsummary <- function(dir="",genome,bamfile=NULL,singlepair="automated",remov
     tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
     allres <- rbind(allres,tmp)
   }
+  allres
 }
 
 
