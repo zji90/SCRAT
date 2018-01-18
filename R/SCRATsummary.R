@@ -10,7 +10,8 @@
 #' @param removeblacklist Logical value indicating whether black list regions should be removed.
 #' @param log2transform Logical value indicating whether the read counts should be log2 transformed (after adding pseudo-count of 1).
 #' @param adjustlen Logical value indicating whether the signal should be divided by the total length (base pairs) of each feature.
-#' @param featurelist A character vector specifying what kind of features should be considered. Should be from the following: "GENE","ENCL","MOTIF_TRANSFAC","MOTIF_JASPAR","GSEA". By default all features are included. Note that "GSEA" features could be slow to run.
+#' @param featurelist A character vector specifying what kind of features should be considered. Should be from the following: "GENE","ENCL","MOTIF_TRANSFAC","MOTIF_JASPAR","GSEA","Custom". By default all features except custom are included. Note that "GSEA" features could be slow to run.
+#' @param customfeature Location of the bed file of custom feature.
 #' @param Genestarttype For "GENE" features, type of starting site. Should be one of the following: "TSSup", "TSSdown", "TESup", "TESdown". The four options stands for TSS upstream, TSS downstream, TES upstream and TES downstream.
 #' @param Geneendtype For "GENE" features, type of ending site. Options same as Genestarttype
 #' @param Genestartbp For "GENE" features, how many base pairs away from starting TSS/TES. For example, Genestarttype="TSSup" and Genestartbp=500 means 500 bp upstream of TSS.
@@ -30,215 +31,230 @@
 #'    SCRATsummary(dir="bamfiledir",genome="hg19")
 #' }
 
-SCRATsummary <- function(dir="",genome,bamfile=NULL,singlepair="automated",removeblacklist=T,log2transform=T,adjustlen=T,featurelist=c("GENE","ENCL","MOTIF_TRANSFAC","MOTIF_JASPAR","GSEA"),Genestarttype="TSSup",Geneendtype="TSSdown",Genestartbp=3000,Geneendbp=1000,ENCLclunum=2000,Motifflank=100,GSEAterm="c5.bp",GSEAstarttype="TSSup",GSEAendtype="TSSdown",GSEAstartbp=3000,GSEAendbp=1000) {
-      if (is.null(bamfile)) {
-            bamfile <- list.files(dir,pattern = ".bam$")
-      }
-      datapath <- system.file("extdata",package=paste0("SCRATdata",genome))
-      bamdata <- list()
-      
-      for (i in bamfile) {
-            filepath <- file.path(dir,i)
-            if (singlepair=="automated") {
-                  bamfile <- BamFile(filepath)
-                  tmpsingle <- readGAlignments(bamfile)
-                  tmppair <- readGAlignmentPairs(bamfile)
-                  pairendtf <- testPairedEndBam(bamfile)
-                  if (pairendtf) {
-                        tmp <- tmppair
-                        startpos <- pmin(start(first(tmp)),start(last(tmp)))
-                        endpos <- pmax(end(first(tmp)),end(last(tmp)))
-                        tmp <- GRanges(seqnames=seqnames(tmp),IRanges(start=startpos,end=endpos))
-                  } else {
-                        tmp <- GRanges(tmpsingle)            
-                  }      
-            } else if (singlepair=="single") {
-                  tmp <- GRanges(readGAlignments(filepath))                  
-            } else if (singlepair=="pair") {
-                  tmp <- readGAlignmentPairs(filepath)
-                  startpos <- pmin(start(first(tmp)),start(last(tmp)))
-                  endpos <- pmax(end(first(tmp)),end(last(tmp)))
-                  tmp <- GRanges(seqnames=seqnames(tmp),IRanges(start=startpos,end=endpos))
-            }
-            if (removeblacklist) {
-                  load(paste0(datapath,"/gr/blacklist.rda"))
-                  tmp <- tmp[-as.matrix(findOverlaps(tmp,gr))[,1],]                  
-            }
-            bamdata[[i]] <- tmp 
-      }
-      bamsummary <- sapply(bamdata,length)
-      allres <- NULL
-      datapath <- system.file("extdata",package=paste0("SCRATdata",genome))
-      if ("GENE" %in% featurelist) {      
-            print("Processing GENE features")
-            load(paste0(datapath,"/gr/generegion.rda"))
-            if (Genestarttype == "TSSup") {
-                  grstart <- ifelse(as.character(strand(gr))=="+",start(gr)-as.numeric(Genestartbp),end(gr)+as.numeric(Genestartbp))
-            } else if (Genestarttype == "TSSdown") {
-                  grstart <- ifelse(as.character(strand(gr))=="+",start(gr)+as.numeric(Genestartbp),end(gr)-as.numeric(Genestartbp))
-            } else if (Genestarttype == "TESup") {
-                  grstart <- ifelse(as.character(strand(gr))=="+",end(gr)-as.numeric(Genestartbp),start(gr)+as.numeric(Genestartbp))
-            } else if (Genestarttype == "TESdown") {
-                  grstart <- ifelse(as.character(strand(gr))=="+",end(gr)+as.numeric(Genestartbp),start(gr)-as.numeric(Genestartbp))
-            }
-            if (Geneendtype == "TSSup") {
-                  grend <- ifelse(as.character(strand(gr))=="+",start(gr)-as.numeric(Geneendbp),end(gr)+as.numeric(Geneendbp))
-            } else if (Geneendtype == "TSSdown") {
-                  grend <- ifelse(as.character(strand(gr))=="+",start(gr)+as.numeric(Geneendbp),end(gr)-as.numeric(Geneendbp))
-            } else if (Geneendtype == "TESup") {
-                  grend <- ifelse(as.character(strand(gr))=="+",end(gr)-as.numeric(Geneendbp),start(gr)+as.numeric(Geneendbp))
-            } else if (Geneendtype == "TESdown") {
-                  grend <- ifelse(as.character(strand(gr))=="+",end(gr)+as.numeric(Geneendbp),start(gr)-as.numeric(Geneendbp))
-            }
-            ngr <- names(gr)
-            gr <- GRanges(seqnames=seqnames(gr),IRanges(start=pmin(grstart,grend),end=pmax(grstart,grend)))      
-            names(gr) <- ngr
-            tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
-            tmp <- sweep(tmp,2,bamsummary,"/") * 10000
-            if (log2transform) {
-                  tmp <- log2(tmp + 1)
-            }
-            if (adjustlen) {
-              grrange <- end(gr)-start(gr) + 1
-              tmp <- sweep(tmp,1,grrange,"/") * 1e6
-            }
-            tmp <- tmp[rowSums(tmp) > 0,,drop=F]
-            allres <- rbind(allres,tmp)      
-      }
-      if ("ENCL" %in% featurelist) {      
-            print("Processing ENCL features")
-            load(paste0(datapath,"/gr/ENCL",ENCLclunum,".rda"))
-            tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
-            tmp <- sweep(tmp,2,bamsummary,"/") * 10000
-            if (log2transform) {
-                  tmp <- log2(tmp + 1)
-            }
-            if (adjustlen) {
-              grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
-              tmp <- sweep(tmp,1,grrange,"/") * 1e6
-            }
-            tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
-            allres <- rbind(allres,tmp)      
+SCRATsummary <- function(dir="",genome,bamfile=NULL,singlepair="automated",removeblacklist=T,log2transform=T,adjustlen=T,featurelist=c("GENE","ENCL","MOTIF_TRANSFAC","MOTIF_JASPAR","GSEA"),customfeature=NULL,Genestarttype="TSSup",Geneendtype="TSSdown",Genestartbp=3000,Geneendbp=1000,ENCLclunum=2000,Motifflank=100,GSEAterm="c5.bp",GSEAstarttype="TSSup",GSEAendtype="TSSdown",GSEAstartbp=3000,GSEAendbp=1000) {
+  if (is.null(bamfile)) {
+    bamfile <- list.files(dir,pattern = ".bam$")
+  }
+  datapath <- system.file("extdata",package=paste0("SCRATdata",genome))
+  bamdata <- list()
+  
+  for (i in bamfile) {
+    filepath <- file.path(dir,i)
+    if (singlepair=="automated") {
+      bamfile <- BamFile(filepath)
+      tmpsingle <- readGAlignments(bamfile)
+      tmppair <- readGAlignmentPairs(bamfile)
+      pairendtf <- testPairedEndBam(bamfile)
+      if (pairendtf) {
+        tmp <- tmppair
+        startpos <- pmin(start(first(tmp)),start(last(tmp)))
+        endpos <- pmax(end(first(tmp)),end(last(tmp)))
+        tmp <- GRanges(seqnames=seqnames(tmp),IRanges(start=startpos,end=endpos))
+      } else {
+        tmp <- GRanges(tmpsingle)            
       }      
-      if ("MOTIF_TRANSFAC" %in% featurelist) {  
-            print("Processing MOTIF_TRANSFAC features")
-            load(paste0(datapath,"/gr/transfac1.rda"))
-            gr <- flank(gr,as.numeric(Motifflank),both = T)
-            tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
-            tmp <- sweep(tmp,2,bamsummary,"/") * 10000
-            if (log2transform) {
-                  tmp <- log2(tmp + 1)
-            }
-            if (adjustlen) {
-              grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
-              tmp <- sweep(tmp,1,grrange,"/") * 1e6
-            }
-            tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
-            allres <- rbind(allres,tmp)
-            load(paste0(datapath,"/gr/transfac2.rda"))
-            gr <- flank(gr,as.numeric(Motifflank),both = T)
-            tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
-            tmp <- sweep(tmp,2,bamsummary,"/") * 10000
-            if (log2transform) {
-                  tmp <- log2(tmp + 1)
-            }
-            if (adjustlen) {
-              grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
-              tmp <- sweep(tmp,1,grrange,"/") * 1e6
-            }
-            tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
-            allres <- rbind(allres,tmp)
-            if (genome %in% c("hg19","hg38")) {
-                  load(paste0(datapath,"/gr/transfac3.rda"))
-                  gr <- flank(gr,as.numeric(Motifflank),both = T)
-                  tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
-                  tmp <- sweep(tmp,2,bamsummary,"/") * 10000
-                  if (log2transform) {
-                        tmp <- log2(tmp + 1)
-                  }
-                  if (adjustlen) {
-                    grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
-                    tmp <- sweep(tmp,1,grrange,"/") * 1e6
-                  }
-                  tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
-                  allres <- rbind(allres,tmp)
-            }
+    } else if (singlepair=="single") {
+      tmp <- GRanges(readGAlignments(filepath))                  
+    } else if (singlepair=="pair") {
+      tmp <- readGAlignmentPairs(filepath)
+      startpos <- pmin(start(first(tmp)),start(last(tmp)))
+      endpos <- pmax(end(first(tmp)),end(last(tmp)))
+      tmp <- GRanges(seqnames=seqnames(tmp),IRanges(start=startpos,end=endpos))
+    }
+    if (removeblacklist) {
+      load(paste0(datapath,"/gr/blacklist.rda"))
+      tmp <- tmp[-as.matrix(findOverlaps(tmp,gr))[,1],]                  
+    }
+    bamdata[[i]] <- tmp 
+  }
+  bamsummary <- sapply(bamdata,length)
+  allres <- NULL
+  datapath <- system.file("extdata",package=paste0("SCRATdata",genome))
+  if ("GENE" %in% featurelist) {      
+    print("Processing GENE features")
+    load(paste0(datapath,"/gr/generegion.rda"))
+    if (Genestarttype == "TSSup") {
+      grstart <- ifelse(as.character(strand(gr))=="+",start(gr)-as.numeric(Genestartbp),end(gr)+as.numeric(Genestartbp))
+    } else if (Genestarttype == "TSSdown") {
+      grstart <- ifelse(as.character(strand(gr))=="+",start(gr)+as.numeric(Genestartbp),end(gr)-as.numeric(Genestartbp))
+    } else if (Genestarttype == "TESup") {
+      grstart <- ifelse(as.character(strand(gr))=="+",end(gr)-as.numeric(Genestartbp),start(gr)+as.numeric(Genestartbp))
+    } else if (Genestarttype == "TESdown") {
+      grstart <- ifelse(as.character(strand(gr))=="+",end(gr)+as.numeric(Genestartbp),start(gr)-as.numeric(Genestartbp))
+    }
+    if (Geneendtype == "TSSup") {
+      grend <- ifelse(as.character(strand(gr))=="+",start(gr)-as.numeric(Geneendbp),end(gr)+as.numeric(Geneendbp))
+    } else if (Geneendtype == "TSSdown") {
+      grend <- ifelse(as.character(strand(gr))=="+",start(gr)+as.numeric(Geneendbp),end(gr)-as.numeric(Geneendbp))
+    } else if (Geneendtype == "TESup") {
+      grend <- ifelse(as.character(strand(gr))=="+",end(gr)-as.numeric(Geneendbp),start(gr)+as.numeric(Geneendbp))
+    } else if (Geneendtype == "TESdown") {
+      grend <- ifelse(as.character(strand(gr))=="+",end(gr)+as.numeric(Geneendbp),start(gr)-as.numeric(Geneendbp))
+    }
+    ngr <- names(gr)
+    gr <- GRanges(seqnames=seqnames(gr),IRanges(start=pmin(grstart,grend),end=pmax(grstart,grend)))      
+    names(gr) <- ngr
+    tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
+    tmp <- sweep(tmp,2,bamsummary,"/") * 10000
+    if (log2transform) {
+      tmp <- log2(tmp + 1)
+    }
+    if (adjustlen) {
+      grrange <- end(gr)-start(gr) + 1
+      tmp <- sweep(tmp,1,grrange,"/") * 1e6
+    }
+    tmp <- tmp[rowSums(tmp) > 0,,drop=F]
+    allres <- rbind(allres,tmp)      
+  }
+  if ("ENCL" %in% featurelist) {      
+    print("Processing ENCL features")
+    load(paste0(datapath,"/gr/ENCL",ENCLclunum,".rda"))
+    tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
+    tmp <- sweep(tmp,2,bamsummary,"/") * 10000
+    if (log2transform) {
+      tmp <- log2(tmp + 1)
+    }
+    if (adjustlen) {
+      grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
+      tmp <- sweep(tmp,1,grrange,"/") * 1e6
+    }
+    tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
+    allres <- rbind(allres,tmp)      
+  }      
+  if ("MOTIF_TRANSFAC" %in% featurelist) {  
+    print("Processing MOTIF_TRANSFAC features")
+    load(paste0(datapath,"/gr/transfac1.rda"))
+    gr <- flank(gr,as.numeric(Motifflank),both = T)
+    tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
+    tmp <- sweep(tmp,2,bamsummary,"/") * 10000
+    if (log2transform) {
+      tmp <- log2(tmp + 1)
+    }
+    if (adjustlen) {
+      grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
+      tmp <- sweep(tmp,1,grrange,"/") * 1e6
+    }
+    tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
+    allres <- rbind(allres,tmp)
+    load(paste0(datapath,"/gr/transfac2.rda"))
+    gr <- flank(gr,as.numeric(Motifflank),both = T)
+    tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
+    tmp <- sweep(tmp,2,bamsummary,"/") * 10000
+    if (log2transform) {
+      tmp <- log2(tmp + 1)
+    }
+    if (adjustlen) {
+      grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
+      tmp <- sweep(tmp,1,grrange,"/") * 1e6
+    }
+    tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
+    allres <- rbind(allres,tmp)
+    if (genome %in% c("hg19","hg38")) {
+      load(paste0(datapath,"/gr/transfac3.rda"))
+      gr <- flank(gr,as.numeric(Motifflank),both = T)
+      tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
+      tmp <- sweep(tmp,2,bamsummary,"/") * 10000
+      if (log2transform) {
+        tmp <- log2(tmp + 1)
       }
-      if ("MOTIF_JASPAR" %in% featurelist) {     
-            print("Processing MOTIF_JASPAR features")
-            load(paste0(datapath,"/gr/jaspar1.rda"))
-            gr <- flank(gr,as.numeric(Motifflank),both = T)
-            tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
-            tmp <- sweep(tmp,2,bamsummary,"/") * 10000
-            if (log2transform) {
-                  tmp <- log2(tmp + 1)
-            }
-            if (adjustlen) {
-              grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
-              tmp <- sweep(tmp,1,grrange,"/") * 1e6
-            }
-            tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
-            allres <- rbind(allres,tmp)
-            load(paste0(datapath,"/gr/jaspar2.rda"))
-            gr <- flank(gr,as.numeric(Motifflank),both = T)
-            tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
-            tmp <- sweep(tmp,2,bamsummary,"/") * 10000
-            if (log2transform) {
-                  tmp <- log2(tmp + 1)
-            }
-            if (adjustlen) {
-              grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
-              tmp <- sweep(tmp,1,grrange,"/") * 1e6
-            }
-            tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
-            allres <- rbind(allres,tmp)
+      if (adjustlen) {
+        grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
+        tmp <- sweep(tmp,1,grrange,"/") * 1e6
       }
-      if ("GSEA" %in% featurelist) {
-            print("Processing GSEA features")
-            #for (i in c("h.all","c1.all","c2.cgp","c2.cp","c3.mir","c3.tft","c4.cgn","c4.cm","c5.bp","c5.cc","c5.mf","c6.all","c7.all")) {
-            for (i in GSEAterm) {
-                  load(paste0(datapath,"/gr/GSEA",i,".rda"))
-                  allgr <- gr
-                  for (sgrn in names(allgr)) {
-                        gr <- allgr[[sgrn]]
-                        if (GSEAstarttype == "TSSup") {
-                              grstart <- ifelse(as.character(strand(gr))=="+",start(gr)-as.numeric(GSEAstartbp),end(gr)+as.numeric(GSEAstartbp))
-                        } else if (GSEAstarttype == "TSSdown") {
-                              grstart <- ifelse(as.character(strand(gr))=="+",start(gr)+as.numeric(GSEAstartbp),end(gr)-as.numeric(GSEAstartbp))
-                        } else if (GSEAstarttype == "TESup") {
-                              grstart <- ifelse(as.character(strand(gr))=="+",end(gr)-as.numeric(GSEAstartbp),start(gr)+as.numeric(GSEAstartbp))
-                        } else if (GSEAstarttype == "TESdown") {
-                              grstart <- ifelse(as.character(strand(gr))=="+",end(gr)+as.numeric(GSEAstartbp),start(gr)-as.numeric(GSEAstartbp))
-                        }
-                        if (GSEAendtype == "TSSup") {
-                              grend <- ifelse(as.character(strand(gr))=="+",start(gr)-as.numeric(GSEAendbp),end(gr)+as.numeric(GSEAendbp))
-                        } else if (GSEAendtype == "TSSdown") {
-                              grend <- ifelse(as.character(strand(gr))=="+",start(gr)+as.numeric(GSEAendbp),end(gr)-as.numeric(GSEAendbp))
-                        } else if (GSEAendtype == "TESup") {
-                              grend <- ifelse(as.character(strand(gr))=="+",end(gr)-as.numeric(GSEAendbp),start(gr)+as.numeric(GSEAendbp))
-                        } else if (GSEAendtype == "TESdown") {
-                              grend <- ifelse(as.character(strand(gr))=="+",end(gr)+as.numeric(GSEAendbp),start(gr)-as.numeric(GSEAendbp))
-                        }
-                        ngr <- names(gr)
-                        gr <- GRanges(seqnames=seqnames(gr),IRanges(start=pmin(grstart,grend),end=pmax(grstart,grend)))      
-                        names(gr) <- ngr   
-                        allgr[[sgrn]] <- gr
-                  }
-                  gr <- allgr
-                  tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
-                  tmp <- sweep(tmp,2,bamsummary,"/") * 10000
-                  if (log2transform) {
-                        tmp <- log2(tmp + 1)
-                  }
-                  if (adjustlen) {
-                    grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
-                    tmp <- sweep(tmp,1,grrange,"/") * 1e6
-                  }
-                  tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
-                  allres <- rbind(allres,tmp)
-            }
+      tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
+      allres <- rbind(allres,tmp)
+    }
+  }
+  if ("MOTIF_JASPAR" %in% featurelist) {     
+    print("Processing MOTIF_JASPAR features")
+    load(paste0(datapath,"/gr/jaspar1.rda"))
+    gr <- flank(gr,as.numeric(Motifflank),both = T)
+    tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
+    tmp <- sweep(tmp,2,bamsummary,"/") * 10000
+    if (log2transform) {
+      tmp <- log2(tmp + 1)
+    }
+    if (adjustlen) {
+      grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
+      tmp <- sweep(tmp,1,grrange,"/") * 1e6
+    }
+    tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
+    allres <- rbind(allres,tmp)
+    load(paste0(datapath,"/gr/jaspar2.rda"))
+    gr <- flank(gr,as.numeric(Motifflank),both = T)
+    tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
+    tmp <- sweep(tmp,2,bamsummary,"/") * 10000
+    if (log2transform) {
+      tmp <- log2(tmp + 1)
+    }
+    if (adjustlen) {
+      grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
+      tmp <- sweep(tmp,1,grrange,"/") * 1e6
+    }
+    tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
+    allres <- rbind(allres,tmp)
+  }
+  if ("GSEA" %in% featurelist) {
+    print("Processing GSEA features")
+    #for (i in c("h.all","c1.all","c2.cgp","c2.cp","c3.mir","c3.tft","c4.cgn","c4.cm","c5.bp","c5.cc","c5.mf","c6.all","c7.all")) {
+    for (i in GSEAterm) {
+      load(paste0(datapath,"/gr/GSEA",i,".rda"))
+      allgr <- gr
+      for (sgrn in names(allgr)) {
+        gr <- allgr[[sgrn]]
+        if (GSEAstarttype == "TSSup") {
+          grstart <- ifelse(as.character(strand(gr))=="+",start(gr)-as.numeric(GSEAstartbp),end(gr)+as.numeric(GSEAstartbp))
+        } else if (GSEAstarttype == "TSSdown") {
+          grstart <- ifelse(as.character(strand(gr))=="+",start(gr)+as.numeric(GSEAstartbp),end(gr)-as.numeric(GSEAstartbp))
+        } else if (GSEAstarttype == "TESup") {
+          grstart <- ifelse(as.character(strand(gr))=="+",end(gr)-as.numeric(GSEAstartbp),start(gr)+as.numeric(GSEAstartbp))
+        } else if (GSEAstarttype == "TESdown") {
+          grstart <- ifelse(as.character(strand(gr))=="+",end(gr)+as.numeric(GSEAstartbp),start(gr)-as.numeric(GSEAstartbp))
+        }
+        if (GSEAendtype == "TSSup") {
+          grend <- ifelse(as.character(strand(gr))=="+",start(gr)-as.numeric(GSEAendbp),end(gr)+as.numeric(GSEAendbp))
+        } else if (GSEAendtype == "TSSdown") {
+          grend <- ifelse(as.character(strand(gr))=="+",start(gr)+as.numeric(GSEAendbp),end(gr)-as.numeric(GSEAendbp))
+        } else if (GSEAendtype == "TESup") {
+          grend <- ifelse(as.character(strand(gr))=="+",end(gr)-as.numeric(GSEAendbp),start(gr)+as.numeric(GSEAendbp))
+        } else if (GSEAendtype == "TESdown") {
+          grend <- ifelse(as.character(strand(gr))=="+",end(gr)+as.numeric(GSEAendbp),start(gr)-as.numeric(GSEAendbp))
+        }
+        ngr <- names(gr)
+        gr <- GRanges(seqnames=seqnames(gr),IRanges(start=pmin(grstart,grend),end=pmax(grstart,grend)))
+        names(gr) <- ngr   
+        allgr[[sgrn]] <- gr
       }
-      allres[rowSums(allres) > 0,]
+      gr <- allgr
+      tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
+      tmp <- sweep(tmp,2,bamsummary,"/") * 10000
+      if (log2transform) {
+        tmp <- log2(tmp + 1)
+      }
+      if (adjustlen) {
+        grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
+        tmp <- sweep(tmp,1,grrange,"/") * 1e6
+      }
+      tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
+      allres <- rbind(allres,tmp)
+    }
+  }
+  if ("Custom" %in% featurelist) {
+    print("Processing custom features")
+    gr <- read.table(customfeature,as.is=T,sep="\t")
+    gr <- GRanges(seqnames=gr[,1],IRanges(start=gr[,2],end=gr[,3]))
+    tmp <- sapply(bamdata,function(i) countOverlaps(gr,i))
+    tmp <- sweep(tmp,2,bamsummary,"/") * 10000
+    if (log2transform) {
+      tmp <- log2(tmp + 1)
+    }
+    if (adjustlen) {
+      grrange <- end(gr)-start(gr) + 1
+      tmp <- sweep(tmp,1,grrange,"/") * 1e6
+    }
+    tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
+    allres <- rbind(allres,tmp)
+  }
 }
 
 
