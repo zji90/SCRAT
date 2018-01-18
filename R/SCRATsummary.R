@@ -9,6 +9,7 @@
 #' @param singlepair Whether the original sequencing files are single-end or paired-end. Should be one of the following: "automated", "single", "pair". Default is "automated" where SCRAT will automatically determine the type.
 #' @param removeblacklist Logical value indicating whether black list regions should be removed.
 #' @param log2transform Logical value indicating whether the read counts should be log2 transformed (after adding pseudo-count of 1).
+#' @param adjustlen Logical value indicating whether the signal should be divided by the total length (base pairs) of each feature.
 #' @param featurelist A character vector specifying what kind of features should be considered. Should be from the following: "GENE","ENCL","MOTIF_TRANSFAC","MOTIF_JASPAR","GSEA". By default all features are included. Note that "GSEA" features could be slow to run.
 #' @param Genestarttype For "GENE" features, type of starting site. Should be one of the following: "TSSup", "TSSdown", "TESup", "TESdown". The four options stands for TSS upstream, TSS downstream, TES upstream and TES downstream.
 #' @param Geneendtype For "GENE" features, type of ending site. Options same as Genestarttype
@@ -29,7 +30,7 @@
 #'    SCRATsummary(dir="bamfiledir",genome="hg19")
 #' }
 
-SCRATsummary <- function(dir="",genome,bamfile=NULL,singlepair="automated",removeblacklist=T,log2transform=T,featurelist=c("GENE","ENCL","MOTIF_TRANSFAC","MOTIF_JASPAR","GSEA"),Genestarttype="TSSup",Geneendtype="TSSdown",Genestartbp=3000,Geneendbp=1000,ENCLclunum=2000,Motifflank=100,GSEAterm="c5.bp",GSEAstarttype="TSSup",GSEAendtype="TSSdown",GSEAstartbp=3000,GSEAendbp=1000) {
+SCRATsummary <- function(dir="",genome,bamfile=NULL,singlepair="automated",removeblacklist=T,log2transform=T,adjustlen=T,featurelist=c("GENE","ENCL","MOTIF_TRANSFAC","MOTIF_JASPAR","GSEA"),Genestarttype="TSSup",Geneendtype="TSSdown",Genestartbp=3000,Geneendbp=1000,ENCLclunum=2000,Motifflank=100,GSEAterm="c5.bp",GSEAstarttype="TSSup",GSEAendtype="TSSdown",GSEAstartbp=3000,GSEAendbp=1000) {
       if (is.null(bamfile)) {
             bamfile <- list.files(dir,pattern = ".bam$")
       }
@@ -97,6 +98,11 @@ SCRATsummary <- function(dir="",genome,bamfile=NULL,singlepair="automated",remov
             if (log2transform) {
                   tmp <- log2(tmp + 1)
             }
+            if (adjustlen) {
+              grrange <- end(gr)-start(gr) + 1
+              tmp <- sweep(tmp,1,grrange,"/") * 1e6
+            }
+            tmp <- tmp[rowSums(tmp) > 0,,drop=F]
             allres <- rbind(allres,tmp)      
       }
       if ("ENCL" %in% featurelist) {      
@@ -106,6 +112,10 @@ SCRATsummary <- function(dir="",genome,bamfile=NULL,singlepair="automated",remov
             tmp <- sweep(tmp,2,bamsummary,"/") * 10000
             if (log2transform) {
                   tmp <- log2(tmp + 1)
+            }
+            if (adjustlen) {
+              grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
+              tmp <- sweep(tmp,1,grrange,"/") * 1e6
             }
             tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
             allres <- rbind(allres,tmp)      
@@ -119,6 +129,11 @@ SCRATsummary <- function(dir="",genome,bamfile=NULL,singlepair="automated",remov
             if (log2transform) {
                   tmp <- log2(tmp + 1)
             }
+            if (adjustlen) {
+              grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
+              tmp <- sweep(tmp,1,grrange,"/") * 1e6
+            }
+            tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
             allres <- rbind(allres,tmp)
             load(paste0(datapath,"/gr/transfac2.rda"))
             gr <- flank(gr,as.numeric(Motifflank),both = T)
@@ -127,6 +142,11 @@ SCRATsummary <- function(dir="",genome,bamfile=NULL,singlepair="automated",remov
             if (log2transform) {
                   tmp <- log2(tmp + 1)
             }
+            if (adjustlen) {
+              grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
+              tmp <- sweep(tmp,1,grrange,"/") * 1e6
+            }
+            tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
             allres <- rbind(allres,tmp)
             if (genome %in% c("hg19","hg38")) {
                   load(paste0(datapath,"/gr/transfac3.rda"))
@@ -136,6 +156,11 @@ SCRATsummary <- function(dir="",genome,bamfile=NULL,singlepair="automated",remov
                   if (log2transform) {
                         tmp <- log2(tmp + 1)
                   }
+                  if (adjustlen) {
+                    grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
+                    tmp <- sweep(tmp,1,grrange,"/") * 1e6
+                  }
+                  tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
                   allres <- rbind(allres,tmp)
             }
       }
@@ -148,6 +173,11 @@ SCRATsummary <- function(dir="",genome,bamfile=NULL,singlepair="automated",remov
             if (log2transform) {
                   tmp <- log2(tmp + 1)
             }
+            if (adjustlen) {
+              grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
+              tmp <- sweep(tmp,1,grrange,"/") * 1e6
+            }
+            tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
             allres <- rbind(allres,tmp)
             load(paste0(datapath,"/gr/jaspar2.rda"))
             gr <- flank(gr,as.numeric(Motifflank),both = T)
@@ -156,6 +186,11 @@ SCRATsummary <- function(dir="",genome,bamfile=NULL,singlepair="automated",remov
             if (log2transform) {
                   tmp <- log2(tmp + 1)
             }
+            if (adjustlen) {
+              grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
+              tmp <- sweep(tmp,1,grrange,"/") * 1e6
+            }
+            tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
             allres <- rbind(allres,tmp)
       }
       if ("GSEA" %in% featurelist) {
@@ -195,6 +230,11 @@ SCRATsummary <- function(dir="",genome,bamfile=NULL,singlepair="automated",remov
                   if (log2transform) {
                         tmp <- log2(tmp + 1)
                   }
+                  if (adjustlen) {
+                    grrange <- sapply(gr,function(i) sum(end(i)-start(i) + 1))
+                    tmp <- sweep(tmp,1,grrange,"/") * 1e6
+                  }
+                  tmp <- tmp[rowSums(tmp) > 0,,drop=F]       
                   allres <- rbind(allres,tmp)
             }
       }
