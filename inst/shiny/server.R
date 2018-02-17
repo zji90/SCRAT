@@ -179,7 +179,7 @@ shinyServer(function(input, output,session) {
                         if (input$SumuploadFilemultipletf=="One") {
                               FileHandle <- input$SumuploadFile      
                               if (!is.null(FileHandle)) {
-                                    tmp <- read.table(FileHandle$datapath,as.is=T,sep="\t")
+                                    tmp <- read.table(FileHandle$datapath,as.is=T,sep="\t",skipNul=T)
                                     if (ncol(tmp)==3) {
                                           gr <- GRanges(seqnames=tmp[,1],IRanges(start=tmp[,2],end=tmp[,3]))
                                           names(gr) <- paste0("UPLOAD:",tmp[,1],":",tmp[,2],"-",tmp[,3])
@@ -197,7 +197,7 @@ shinyServer(function(input, output,session) {
                               if (!is.null(FileHandle)) {
                                     gr <- GRangesList()
                                     for (i in 1:length(FileHandle$datapath)) {
-                                          tmp <- read.table(FileHandle$datapath[[i]],as.is=T,sep="\t")
+                                          tmp <- read.table(FileHandle$datapath[[i]],as.is=T,sep="\t",skipNul=T)
                                           gr[[paste0("UPLOAD",i)]] <- GRanges(seqnames=tmp[,1],IRanges(start=tmp[,2],end=tmp[,3]))
                                     }
                                     Maindata$uploadgr <- gr
@@ -221,7 +221,7 @@ shinyServer(function(input, output,session) {
             if (require("SCRATexample")) {
                   withProgress(message = 'Reading in...',{
                         FileHandle <- paste0(system.file("extdata/table",package="SCRATexample"),"/SCRAT_summarized_features_GM12878_HEK293T.txt")
-                        tmp <- read.table(FileHandle,sep="\t",header=T,as.is=T,row.names = 1,check.names=FALSE)                                                                        
+                        tmp <- read.table(FileHandle,sep="\t",header=T,as.is=T,row.names = 1,check.names=FALSE,skipNul=T)                                                                        
                         tmp <- tmp[,colnames(tmp) != "CV"]
                         Maindata$allsumtable <- as.matrix(tmp)
                         Maindata$sumtablenametype <- sapply(row.names(Maindata$allsumtable),function(i) strsplit(i,":")[[1]][1])                              
@@ -237,7 +237,7 @@ shinyServer(function(input, output,session) {
                         withProgress(message = 'Reading in...',{
                               FileHandle <- input$SumuploadsumtableFile                        
                               if (!is.null(FileHandle)) {
-                                    tmp <- read.table(FileHandle$datapath,sep="\t",header=T,as.is=T,row.names = 1,check.names=FALSE)                                                                        
+                                    tmp <- read.table(FileHandle$datapath,sep="\t",header=T,as.is=T,row.names = 1,check.names=FALSE,skipNul=T)                                                                        
                                     tmp <- tmp[,colnames(tmp) != "CV"]
                                     Maindata$allsumtable <- as.matrix(tmp)
                                     Maindata$sumtablenametype <- sapply(row.names(Maindata$allsumtable),function(i) strsplit(i,":")[[1]][1])                              
@@ -608,7 +608,7 @@ shinyServer(function(input, output,session) {
                   isolate({
                         FileHandle <- input$SampcluInputFile                        
                         if (!is.null(FileHandle)) {
-                              Maindata$uploadclulist <- read.table(FileHandle$datapath,as.is=T,sep="\t")
+                              Maindata$uploadclulist <- read.table(FileHandle$datapath,as.is=T,sep="\t",skipNul=T)
                         }                        
                   })
             }
