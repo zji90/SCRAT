@@ -63,6 +63,7 @@ shinyServer(function(input, output,session) {
                                           bamfile <- BamFile(FileHandle$datapath[i])
                                           tmpsingle <- readGAlignments(bamfile)
                                           tmppair <- readGAlignmentPairs(bamfile)
+                                          tmppair <- tmppair[!is.na(as.vector(seqnames(tmppair)))]
                                           pairendtf <- testPairedEndBam(bamfile)
                                           if (pairendtf) {
                                                 tmp <- tmppair
