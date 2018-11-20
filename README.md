@@ -44,6 +44,10 @@ if (!require("devtools"))
 devtools::install_github("SCRATexample","zji90")
 ```
 
+## Citation
+Please cite the following paper: 
+Ji Z, Zhou W, Ji H. Single-cell regulome data analysis by SCRAT. Bioinformatics. 2017 Sep 15;33(18):2930-2932.
+
 ## Q & A
 
 How to install SCRAT with older versions of R (e.g., R 3.1.3)

@@ -39,6 +39,8 @@ shinyUI(
                                     h3("Manual"),
                                     p("The User Manual of SCRAT provides the details about the various function menus in SCRAT:",style="font-size:20px"),
                                     tags$iframe(style="height:600px; width:100%", src="manual.pdf"),
+                                    h3("Citation"),
+                                    p("Ji Z, Zhou W, Ji H. Single-cell regulome data analysis by SCRAT. Bioinformatics. 2017 Sep 15;33(18):2930-2932."),
                                     h3("Contact"),
                                     h5("Author: Zhicheng Ji, Weiqiang Zhou, Hongkai Ji",style="font-size:20px"),
                                     h5("Maintainer: Zhicheng Ji (zji4@jhu.edu)",style="font-size:20px"),
