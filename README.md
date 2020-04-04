@@ -41,7 +41,7 @@ SCRAT example data can also be directly loaded in SCRAT UI after the SCRAT examp
 ```{r }
 if (!require("devtools"))
   install.packages("devtools")
-devtools::install_github("SCRATexample","zji90")
+devtools::install_github("zji90/SCRATexample")
 ```
 
 ## Citation
